@@ -1,95 +1,45 @@
 import React from 'react';
-import { Salad, Heart, Shield, Sparkles } from 'lucide-react';
+import { ArrowUpRight, Camera, Heart, Salad } from 'lucide-react';
+
+const links = [
+  { id: 'home', label: 'Home' },
+  { id: 'analyzer', label: 'Analyze food' },
+  { id: 'daily', label: 'Nutrition journey' },
+  { id: 'results', label: 'Smart analysis' },
+  { id: 'profile', label: 'Profile & goals' },
+];
 
 export default function Footer({ setActiveTab }) {
   return (
-    <footer className="bg-white border-t border-teal-100/80 pt-12 pb-8 mt-16 text-slate-600">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
-          
-          <div className="space-y-3 md:col-span-1">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-teal-600 text-white flex items-center justify-center">
-                <Salad className="w-4 h-4" />
-              </div>
-              <span className="font-black font-display text-xl text-slate-900">
-                Nutri<span className="text-teal-600">AI</span>
-              </span>
-            </div>
-            <p className="text-xs text-slate-500 leading-relaxed">
-              Your food. Your goals. One intelligent nutrition agent. Designed with high-accuracy computer vision for Indian & global cuisines.
-            </p>
-          </div>
-
-          <div>
-            <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wider mb-3">
-              Application Flows
-            </h4>
-            <ul className="space-y-2 text-xs">
-              <li>
-                <button onClick={() => setActiveTab('home')} className="hover:text-teal-600 transition-colors">
-                  🏠 Home Landing Page
-                </button>
-              </li>
-              <li>
-                <button onClick={() => setActiveTab('analyzer')} className="hover:text-teal-600 transition-colors">
-                  📸 AI Food Analyzer
-                </button>
-              </li>
-              <li>
-                <button onClick={() => setActiveTab('results')} className="hover:text-teal-600 transition-colors">
-                  📊 Results & Nutrient Score
-                </button>
-              </li>
-              <li>
-                <button onClick={() => setActiveTab('daily')} className="hover:text-teal-600 transition-colors">
-                  📅 Daily Nutrition Tracker
-                </button>
-              </li>
-              <li>
-                <button onClick={() => setActiveTab('profile')} className="hover:text-teal-600 transition-colors">
-                  👤 Profile & Target Goals
-                </button>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wider mb-3">
-              Smart Features
-            </h4>
-            <ul className="space-y-2 text-xs text-slate-500">
-              <li>• Indian Food Intelligence (4,500+ dishes)</li>
-              <li>• Real-time Glycemic Indexing</li>
-              <li>• Portion Scale Estimation</li>
-              <li>• Automated Micronutrient Breakdown</li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wider mb-3">
-              Multi-Agent Architecture
-            </h4>
-            <div className="p-3.5 rounded-2xl bg-teal-50 border border-teal-200 text-xs text-teal-900 space-y-1">
-              <p className="font-bold flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-teal-600" />
-                <span>Agent 1: Motion & Micro-physics</span>
-              </p>
-              <p className="font-bold flex items-center gap-1.5">
-                <Shield className="w-3.5 h-3.5 text-teal-600" />
-                <span>Agent 2: Framework & Teal Theme</span>
-              </p>
-            </div>
-          </div>
-
+    <footer className="site-footer">
+      <div className="landing-container footer-main">
+        <div className="footer-brand">
+          <button className="brand-lockup" type="button" onClick={() => setActiveTab('home')} aria-label="NutriAI home">
+            <span className="brand-mark"><Salad size={20} /></span>
+            <span className="brand-name">Nutri<span>AI</span><small>INTELLIGENT NUTRITION</small></span>
+          </button>
+          <p>Your food. Your goals. One intelligent nutrition agent.</p>
+          <span className="footer-signoff"><Heart size={13} /> Made for everyday wellbeing</span>
         </div>
 
-        <div className="border-t border-slate-100 pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-4">
-          <p>© 2026 NutriAI Platform. Crafted for healthy living.</p>
-          <div className="flex items-center gap-1">
-            <span>Powered by intelligent nutrition models</span>
+        <div className="footer-links-wrap">
+          <div>
+            <h2>Explore</h2>
+            <ul className="footer-links">
+              {links.map(({ id, label }) => <li key={id}><button onClick={() => setActiveTab(id)}>{label}<ArrowUpRight size={13} /></button></li>)}
+            </ul>
+          </div>
+          <div className="footer-cta-box">
+            <span className="footer-cta-icon"><Camera size={17} /></span>
+            <strong>Curious about a meal?</strong>
+            <p>Start with a photo and see what’s on your plate.</p>
+            <button onClick={() => setActiveTab('analyzer')}>Try food analysis <ArrowUpRight size={14} /></button>
           </div>
         </div>
+      </div>
+      <div className="landing-container footer-bottom">
+        <span>© {new Date().getFullYear()} NutriAI</span>
+        <span>Nutrition insights to support your everyday choices.</span>
       </div>
     </footer>
   );
