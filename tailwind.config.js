@@ -8,17 +8,17 @@ export default {
     extend: {
       colors: {
         teal: {
-          50: '#f0fdfa',
-          100: '#ccfbf1',
-          200: '#99f6e4',
-          300: '#5eead4',
-          400: '#2dd4bf',
-          500: '#14b8a6',
-          600: '#0d9488',
-          700: '#0f766e',
-          800: '#115e59',
-          900: '#134e4a',
-          950: '#042f2e',
+          50: '#f1faf7',
+          100: '#ddf7f3',
+          200: '#b8e8df',
+          300: '#9eddd2',
+          400: '#74c0b2',
+          500: '#519f92',
+          600: '#367f75',
+          700: '#28665f',
+          800: '#205550',
+          900: '#174a47',
+          950: '#103834',
         },
       },
       fontFamily: {
@@ -26,10 +26,10 @@ export default {
         display: ['Outfit', 'Cabinet Grotesk', 'sans-serif'],
       },
       boxShadow: {
-        'pop': '0 10px 25px -5px rgba(13, 148, 136, 0.3), 0 8px 10px -6px rgba(13, 148, 136, 0.2)',
-        'pop-lg': '0 20px 35px -10px rgba(13, 148, 136, 0.4), 0 10px 15px -5px rgba(13, 148, 136, 0.25)',
-        'glow-teal': '0 0 30px rgba(20, 184, 166, 0.35)',
-        'card-soft': '0 4px 20px rgba(15, 118, 110, 0.06)',
+        'pop': '0 10px 25px -5px rgba(54, 127, 117, 0.2), 0 8px 10px -6px rgba(54, 127, 117, 0.14)',
+        'pop-lg': '0 20px 35px -10px rgba(54, 127, 117, 0.28), 0 10px 15px -5px rgba(54, 127, 117, 0.18)',
+        'glow-teal': '0 0 30px rgba(116, 192, 178, 0.24)',
+        'card-soft': '0 8px 28px rgba(23, 74, 71, 0.07)',
       },
       animation: {
         'float-slow': 'float 6s ease-in-out infinite',

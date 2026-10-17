@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+# NutriAI backend secrets and Python environment
+backend/.env
+backend/venv/
+backend/**/__pycache__/
+backend/.pytest_cache/
