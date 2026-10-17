@@ -162,8 +162,8 @@ export default function HeroLanding({ onNavigateToAnalyzer, onNavigateToDaily, s
             <div className="hero-image-frame">
               <img
                 className="hero-food-image"
-                src="/nutriai-bowl.webp"
-                alt="A colorful grain bowl with avocado, chickpeas, leafy greens, tomatoes, and fresh herbs"
+                src="/nutriai-3d-meal-bowl.png"
+                alt="3D-rendered grain bowl with avocado, chickpeas, tomatoes, greens, and floating ingredients"
                 fetchPriority="high"
               />
             </div>
@@ -232,7 +232,7 @@ export default function HeroLanding({ onNavigateToAnalyzer, onNavigateToDaily, s
                 <span className="demo-tag">DEMO</span>
               </div>
               <div className="demo-meal-row">
-                <img src="/nutriai-bowl.webp" alt="Sample grain bowl" loading="lazy" />
+                <img src="/nutriai-3d-meal-bowl.png" alt="3D-rendered sample grain bowl with floating ingredients" loading="lazy" />
                 <div><strong>Colorful grain bowl</strong><small>Illustrative example</small><span><Clock3 size={13} /> A balanced lunch idea</span></div>
               </div>
               <div className="demo-calorie-row"><span>Estimated energy</span><strong>620 <small>kcal</small></strong></div>
