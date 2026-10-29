@@ -107,6 +107,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .nav-link.is-active { color: #174a47; background: rgba(255,255,255,.79); box-shadow: 0 3px 11px rgba(23,74,71,.08), inset 0 1px 0 white; }
 .nav-link.is-active svg { color: #d99279; }
 .nav-actions { display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
+.demo-mode-badge { display: inline-flex; align-items: center; min-height: 27px; padding: 0 9px; border: 1px solid rgba(201,157,91,.38); border-radius: 999px; color: #80643e; background: rgba(255,244,221,.8); font-size: 9px; font-weight: 800; white-space: nowrap; }
+.demo-mode-badge--mobile { justify-self: start; margin: 4px 8px; }
 .profile-shortcut { display: inline-flex; align-items: center; gap: 7px; padding: 10px 12px; border: 1px solid transparent; border-radius: 999px; background: transparent; color: #607572; font-size: 11px; font-weight: 700; cursor: pointer; }
 .profile-shortcut:hover, .profile-shortcut.is-active { color: #174a47; background: rgba(255,255,255,.62); border-color: rgba(255,255,255,.7); }
 .nav-cta, .mobile-nav-cta { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 0 15px; border: 1px solid rgba(255,255,255,.66); border-radius: 999px; color: #174a47; background: linear-gradient(110deg, rgba(255,181,156,.72), rgba(158,221,210,.72)); box-shadow: 0 5px 15px rgba(23,74,71,.08); font-size: 11px; font-weight: 800; cursor: pointer; transition: transform .2s ease, box-shadow .2s ease; }

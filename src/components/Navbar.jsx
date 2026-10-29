@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { ArrowUpRight, BarChart3, CalendarDays, Camera, Menu, Salad, Sparkles, UserRound, X } from 'lucide-react';
+import { ArrowUpRight, BarChart3, CalendarDays, Camera, LogOut, Menu, Salad, Sparkles, UserRound, X } from 'lucide-react';
 
 const navItems = [
   { id: 'home', label: 'Home', icon: Salad },
@@ -9,7 +9,7 @@ const navItems = [
   { id: 'results', label: 'Smart analysis', icon: BarChart3 },
 ];
 
-export default function Navbar({ activeTab, setActiveTab }) {
+export default function Navbar({ activeTab, setActiveTab, onSignOut, demoMode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const reducedMotion = useReducedMotion();
 
@@ -48,9 +48,14 @@ export default function Navbar({ activeTab, setActiveTab }) {
           </nav>
 
           <div className="nav-actions">
+            {demoMode && <span className="demo-mode-badge">Demo mode</span>}
             <button className={`profile-shortcut${activeTab === 'profile' ? ' is-active' : ''}`} onClick={() => navigate('profile')} aria-label="Profile and goals" aria-current={activeTab === 'profile' ? 'page' : undefined}>
               <UserRound size={16} />
               <span>Profile</span>
+            </button>
+            <button className="profile-shortcut" type="button" onClick={onSignOut} aria-label={demoMode ? 'Exit demo' : 'Sign out'}>
+              <LogOut size={15} />
+              <span>{demoMode ? 'Exit demo' : 'Sign out'}</span>
             </button>
             <button className="nav-cta" onClick={() => navigate('analyzer')}>
               <Sparkles size={15} />
@@ -83,8 +88,12 @@ export default function Navbar({ activeTab, setActiveTab }) {
               transition={{ duration: 0.18 }}
             >
               {renderItems(true)}
+              {demoMode && <span className="demo-mode-badge demo-mode-badge--mobile">Demo mode · sample data only</span>}
               <button className={`nav-link nav-link--mobile${activeTab === 'profile' ? ' is-active' : ''}`} onClick={() => navigate('profile')} aria-current={activeTab === 'profile' ? 'page' : undefined}>
                 <UserRound size={16} /><span>Profile &amp; goals</span>
+              </button>
+              <button className="nav-link nav-link--mobile" type="button" onClick={onSignOut}>
+                <LogOut size={16} /><span>{demoMode ? 'Exit demo' : 'Sign out'}</span>
               </button>
               <button className="mobile-nav-cta" onClick={() => navigate('analyzer')}><Camera size={16} /> Analyze a meal <ArrowUpRight size={15} /></button>
             </motion.nav>

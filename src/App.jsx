@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence, useMotionValue, useReducedMotion, useScroll, useSpring, useTransform } from 'framer-motion';
 import Navbar from './components/Navbar';
+import AuthPage from './components/AuthPage';
 import HeroLanding from './components/HeroLanding';
 import FoodAnalyzer from './components/FoodAnalyzer';
 import NutritionResults from './components/NutritionResults';
@@ -8,6 +9,7 @@ import DailyDashboard from './components/DailyDashboard';
 import ProfileSettings from './components/ProfileSettings';
 import Footer from './components/Footer';
 import { PRESET_MEALS, INITIAL_USER_PROFILE, INITIAL_TODAY_LOG } from './data/mockMeals';
+import { authClient, authConfigured } from './auth/authClient';
 
 function AmbientBackground() {
   const reducedMotion = useReducedMotion();
@@ -88,6 +90,59 @@ function AmbientBackground() {
 }
 
 export default function App() {
+  const [authSession, setAuthSession] = useState(null);
+  const [demoMode, setDemoMode] = useState(false);
+  const [authLoading, setAuthLoading] = useState(Boolean(authClient?.auth));
+  const [pathname, setPathname] = useState(window.location.pathname);
+
+  useEffect(() => {
+    const handlePopState = () => setPathname(window.location.pathname);
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  useEffect(() => {
+    if (!authClient?.auth) {
+      return undefined;
+    }
+
+    let active = true;
+    const { data: { subscription } } = authClient.auth.onAuthStateChange((_event, session) => {
+      if (active) setAuthSession(session);
+    });
+
+    authClient.auth.getSession().then(({ data, error }) => {
+      if (!active) return;
+      if (error) {
+        console.error('Unable to restore the authentication session:', error.message);
+        setAuthSession(null);
+      } else {
+        setAuthSession(data.session);
+      }
+      setAuthLoading(false);
+    }).catch((error) => {
+      if (!active) return;
+      console.error('Unable to restore the authentication session:', error);
+      setAuthSession(null);
+      setAuthLoading(false);
+    });
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const hasAppAccess = Boolean(authSession?.user) || (import.meta.env.DEV && demoMode);
+
+  useEffect(() => {
+    if (authLoading) return;
+    const targetPath = hasAppAccess ? '/' : '/login';
+    if (pathname !== targetPath) {
+      window.history.replaceState({}, '', targetPath);
+    }
+  }, [authLoading, hasAppAccess, pathname]);
+
   // Navigation: 'home' | 'analyzer' | 'results' | 'daily' | 'profile'
   const [activeTab, setActiveTab] = useState('home');
   
@@ -223,6 +278,71 @@ export default function App() {
     showToast(`Profile updated! Goal set to ${updatedData.goal}.`);
   };
 
+  const handleAuthenticate = async ({ mode, fullName, email, password }) => {
+    if (!authClient?.auth) {
+      return {
+        type: 'error',
+        message: 'Authentication is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env.local, then restart the dev server.',
+      };
+    }
+
+    const result = mode === 'signup'
+      ? await authClient.auth.signUp({ email, password, options: { data: { full_name: fullName } } })
+      : await authClient.auth.signInWithPassword({ email, password });
+
+    if (result.error) return { type: 'error', message: result.error.message };
+    if (mode === 'signup' && !result.data.session) {
+      return { type: 'success', message: 'Your account was created. Check your email to confirm it, then log in.' };
+    }
+    return {};
+  };
+
+  const handlePasswordReset = async (email) => {
+    if (!authClient?.auth) {
+      return {
+        type: 'error',
+        message: 'Password reset is unavailable until an authentication provider is configured.',
+      };
+    }
+
+    const { error } = await authClient.auth.resetPasswordForEmail(email);
+    if (error) return { type: 'error', message: error.message };
+    return { type: 'success', message: 'If an account exists for this address, a password reset email is on its way.' };
+  };
+
+  const handleSignOut = async () => {
+    setDemoMode(false);
+    if (!authClient?.auth) return;
+    const { error } = await authClient.auth.signOut();
+    if (error) showToast(`Could not sign out: ${error.message}`);
+  };
+
+  const handleExploreDemo = () => {
+    window.history.replaceState({}, '', '/');
+    setPathname('/');
+    setDemoMode(true);
+  };
+
+  if (authLoading) {
+    return (
+      <main className="auth-loading" role="status">
+        <span className="auth-spinner" aria-hidden="true" />
+        Restoring your secure session…
+      </main>
+    );
+  }
+
+  if (!hasAppAccess) {
+    return (
+      <AuthPage
+        onAuthenticate={handleAuthenticate}
+        onResetPassword={handlePasswordReset}
+        onExploreDemo={import.meta.env.DEV ? handleExploreDemo : undefined}
+        authConfigured={authConfigured}
+      />
+    );
+  }
+
   return (
     <div className="app-shell min-h-screen flex flex-col text-slate-800 font-sans selection:bg-teal-100 selection:text-teal-900">
       <AmbientBackground />
@@ -246,6 +366,8 @@ export default function App() {
       <Navbar 
         activeTab={activeTab} 
         setActiveTab={setActiveTab} 
+        onSignOut={handleSignOut}
+        demoMode={demoMode}
       />
 
       {/* Dynamic Content Views */}
