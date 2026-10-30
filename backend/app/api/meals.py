@@ -4,6 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Path, Query, Response, status
 from pymongo.database import Database
 
+from app.auth import AuthenticatedUser, get_current_user
 from app.database import get_database
 from app.schemas.nutrition import MealCreateRequest, MealListResponse, MealResponse
 from app.services.meals import create_meal, delete_meal, list_meals
@@ -15,13 +16,15 @@ router = APIRouter(prefix="/api/meals", tags=["meals"])
 @router.post("", response_model=MealResponse, status_code=status.HTTP_201_CREATED)
 def create(
     request: MealCreateRequest,
+    current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
     database: Database = Depends(get_database),
 ) -> MealResponse:
-    return create_meal(database, request)
+    return create_meal(database, request, current_user.user_id)
 
 
 @router.get("", response_model=MealListResponse)
 def list_logged_meals(
+    current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
     meal_date: date | None = Query(
         default=None,
         alias="date",
@@ -35,11 +38,12 @@ def list_logged_meals(
     ),
     database: Database = Depends(get_database),
 ) -> MealListResponse:
-    return list_meals(database, meal_date, limit)
+    return list_meals(database, current_user.user_id, meal_date, limit)
 
 
 @router.delete("/{meal_id}", status_code=status.HTTP_204_NO_CONTENT)
 def remove(
+    current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
     meal_id: Annotated[
         str,
         Path(
@@ -49,5 +53,5 @@ def remove(
     ],
     database: Database = Depends(get_database),
 ) -> Response:
-    delete_meal(database, meal_id)
+    delete_meal(database, current_user.user_id, meal_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

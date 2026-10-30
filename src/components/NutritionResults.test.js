@@ -43,3 +43,43 @@ test('Nutrition Results renders the selected USDA serving, values, and photo fal
     await vite.close();
   }
 });
+
+test('signed-out nutrition results keep analysis public and require sign-in before meal logging', async () => {
+  const vite = await createServer({
+    configFile: false,
+    root: process.cwd(),
+    server: { middlewareMode: true },
+    appType: 'custom',
+    logLevel: 'silent',
+  });
+
+  try {
+    const { default: NutritionResults } = await vite.ssrLoadModule(
+      '/src/components/NutritionResults.jsx',
+    );
+    const markup = renderToStaticMarkup(createElement(NutritionResults, {
+      meal: {
+        name: 'Apples, raw, with skin',
+        fdc_id: 12345,
+        serving: { description: '1 medium (182 g)', gram_weight: 182 },
+        nutrition: { calories: 95, protein: 0.5, carbs: 25, fats: 0.3, fiber: 4.4 },
+        data_source: 'usda_food_data_central',
+        notice: 'Values from USDA FoodData Central.',
+      },
+      userTargets: null,
+      canLogMeal: false,
+      isAuthenticated: false,
+      onRequireAuth: () => {},
+      onLogMeal: async () => true,
+      onScanAnother: () => {},
+      onNavigateToDashboard: () => {},
+    }));
+
+    assert.match(markup, /Apples, raw, with skin/);
+    assert.match(markup, /Sign in to save this food to your personal meal history/);
+    assert.match(markup, /Sign in to NutriAI/);
+    assert.doesNotMatch(markup, /Log This Serving/);
+  } finally {
+    await vite.close();
+  }
+});

@@ -15,9 +15,18 @@ def get_database(request: Request) -> Database[Any]:
 
 
 def initialize_database(database: Database[Any]) -> None:
-    """Create indexes used by list and daily-total queries."""
+    """Create indexes only for the new user-owned collections."""
 
-    database["meals"].create_index(
-        [("meal_day", ASCENDING), ("consumed_at", ASCENDING)],
-        name="meal_day_consumed_at",
+    database["user_profiles"].create_index(
+        [("user_id", ASCENDING)],
+        unique=True,
+        name="user_profiles_user_id_unique",
+    )
+    database["user_meals"].create_index(
+        [("user_id", ASCENDING), ("meal_day", ASCENDING), ("consumed_at", -1)],
+        name="user_meals_user_day_consumed_at",
+    )
+    database["user_meals"].create_index(
+        [("user_id", ASCENDING), ("consumed_at", -1)],
+        name="user_meals_user_consumed_at",
     )

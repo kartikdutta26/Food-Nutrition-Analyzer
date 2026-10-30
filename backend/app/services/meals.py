@@ -37,7 +37,11 @@ def _serialize_meal(document: dict) -> MealResponse:
     )
 
 
-def create_meal(database: Database, request: MealCreateRequest) -> MealResponse:
+def create_meal(
+    database: Database,
+    request: MealCreateRequest,
+    user_id: str,
+) -> MealResponse:
     preset_id = request.preset_id
     if preset_id:
         preset = PRESETS_BY_ID.get(preset_id)
@@ -64,6 +68,7 @@ def create_meal(database: Database, request: MealCreateRequest) -> MealResponse:
     consumed_at = _utc_datetime(request.consumed_at)
     document = {
         "_id": ObjectId(),
+        "user_id": user_id,
         "preset_id": preset_id,
         "name": name,
         "meal_slot": request.meal_slot,
@@ -74,31 +79,41 @@ def create_meal(database: Database, request: MealCreateRequest) -> MealResponse:
         "fdc_id": fdc_id,
         "serving": serving,
     }
-    database["meals"].insert_one(document)
+    database["user_meals"].insert_one(document)
     return _serialize_meal(document)
 
 
 def list_meals(
     database: Database,
+    user_id: str,
     meal_day: date | None,
     limit: int,
 ) -> MealListResponse:
-    query = {"meal_day": meal_day.isoformat()} if meal_day else {}
-    cursor = database["meals"].find(query).sort("consumed_at", -1).limit(limit)
+    query = {"user_id": user_id}
+    if meal_day:
+        query["meal_day"] = meal_day.isoformat()
+    cursor = database["user_meals"].find(query).sort("consumed_at", -1).limit(limit)
     items = [_serialize_meal(document) for document in cursor]
     return MealListResponse(items=items, count=len(items))
 
 
-def delete_meal(database: Database, meal_id: str) -> None:
+def delete_meal(database: Database, user_id: str, meal_id: str) -> None:
     if not ObjectId.is_valid(meal_id):
         raise HTTPException(status_code=422, detail="meal_id must be a valid id")
-    result = database["meals"].delete_one({"_id": ObjectId(meal_id)})
+    result = database["user_meals"].delete_one({"_id": ObjectId(meal_id), "user_id": user_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Meal not found")
 
 
-def daily_nutrition(database: Database, meal_day: date) -> DailyNutritionResponse:
-    documents = database["meals"].find({"meal_day": meal_day.isoformat()})
+def daily_nutrition(
+    database: Database,
+    user_id: str,
+    meal_day: date,
+) -> DailyNutritionResponse:
+    documents = database["user_meals"].find({
+        "user_id": user_id,
+        "meal_day": meal_day.isoformat(),
+    })
     totals = {"calories": 0.0, "protein": 0.0, "carbs": 0.0, "fats": 0.0, "fiber": 0.0}
     meal_count = 0
     fiber_is_complete = True

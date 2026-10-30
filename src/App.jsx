@@ -1,14 +1,34 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence, useMotionValue, useReducedMotion, useScroll, useSpring, useTransform } from 'framer-motion';
+import { ShieldCheck } from 'lucide-react';
 import Navbar from './components/Navbar';
 import HeroLanding from './components/HeroLanding';
 import FoodAnalyzer from './components/FoodAnalyzer';
 import NutritionResults from './components/NutritionResults';
 import DailyDashboard from './components/DailyDashboard';
 import ProfileSettings from './components/ProfileSettings';
+import AuthScreen from './components/AuthScreen';
 import Footer from './components/Footer';
 import { INITIAL_USER_PROFILE } from './data/mockMeals';
 import { createRequestSequence } from './utils/requestSequence';
+import { createPersonalDataScope, resetPersonalDataState } from './utils/personalDataScope';
+import {
+  cleanAuthRedirectUrl,
+  cleanEmailConfirmationTokenFromUrl,
+  createIdempotentCallbackProcessor,
+  friendlyAuthError,
+  getEmailConfirmationCallback,
+  getAuthRedirectInfo,
+  hasSupabaseAuthCallbackPayload,
+  loginWithEmail,
+  registerWithEmail,
+  resendSignupVerification,
+  sendPasswordReset,
+  signOutLocally,
+  subscribeToVerifiedAuthState,
+  updatePassword,
+  verifyEmailWithTokenHash,
+} from './lib/authFlows';
 import {
   analyzeFood,
   createMeal,
@@ -26,6 +46,9 @@ const EMPTY_NUTRITION_TOTALS = {
   fats: 0,
   fiber: 0,
 };
+
+const AUTH_REQUIRED_TABS = new Set(['daily', 'profile']);
+const PERSONAL_DATA_API_ENABLED = true;
 
 function toDashboardMeal(meal) {
   const consumedAt = new Date(meal.consumed_at);
@@ -126,9 +149,66 @@ function AmbientBackground() {
   );
 }
 
+function PersonalDataPending({ section, onExploreFood }) {
+  return (
+    <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
+      <section aria-labelledby="personal-data-pending-title" className="rounded-3xl border border-white/80 bg-white/80 p-7 text-center shadow-card-soft backdrop-blur-xl sm:p-10">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-white bg-teal-50 text-teal-800 shadow-sm">
+          <ShieldCheck className="h-6 w-6" aria-hidden="true" />
+        </div>
+        <span className="inline-flex rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[.15em] text-teal-800">Account connected</span>
+        <h1 id="personal-data-pending-title" className="mt-4 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">Your {section} is waiting for secure sync</h1>
+        <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-slate-600">
+          NutriAI is finishing account-specific access for saved profiles and meal history. Your personal nutrition data stays hidden until that connection is ready.
+        </p>
+        <button type="button" onClick={onExploreFood} className="mt-6 inline-flex items-center justify-center rounded-full border border-white/80 bg-gradient-to-r from-orange-200 to-teal-200 px-5 py-3 text-sm font-extrabold text-teal-950 shadow-sm">
+          Explore food analysis
+        </button>
+      </section>
+    </div>
+  );
+}
+
 export default function App() {
-  // Navigation: 'home' | 'analyzer' | 'results' | 'daily' | 'profile'
-  const [activeTab, setActiveTab] = useState('home');
+  // Navigation: 'home' | 'analyzer' | 'results' | 'daily' | 'profile' | 'auth'
+  const [initialAuthRedirectInfo] = useState(() => getAuthRedirectInfo(
+    globalThis.window?.location?.href || '',
+  ));
+  const [initialEmailConfirmationCallback] = useState(() => getEmailConfirmationCallback(
+    globalThis.window?.location?.href || '',
+  ));
+  const [initialHasAuthCallbackPayload] = useState(() => hasSupabaseAuthCallbackPayload(
+    globalThis.window?.location?.href || '',
+  ));
+  const [activeTab, setActiveTab] = useState(() => (
+    initialAuthRedirectInfo.flow || initialAuthRedirectInfo.error ? 'auth' : 'home'
+  ));
+  const [authUser, setAuthUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [authMode, setAuthMode] = useState(() => (
+    initialAuthRedirectInfo.flow === 'recovery'
+      ? 'reset'
+      : initialEmailConfirmationCallback
+        ? 'verify'
+        : 'login'
+  ));
+  const [authReturnTab, setAuthReturnTab] = useState('home');
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const [recoveryReady, setRecoveryReady] = useState(false);
+  const [authRedirectFlow, setAuthRedirectFlow] = useState(() => (
+    initialAuthRedirectInfo.error ? null : initialAuthRedirectInfo.flow
+  ));
+  const [authRedirectNotice, setAuthRedirectNotice] = useState('');
+  const [authRedirectError, setAuthRedirectError] = useState(initialAuthRedirectInfo.error || '');
+  const pendingProtectedTab = useRef(null);
+  const supabaseClientRef = useRef(null);
+  const initialAuthSessionHandled = useRef(false);
+  const passwordRecoveryHandled = useRef(false);
+  const emailConfirmationToken = useRef(initialEmailConfirmationCallback);
+  const emailConfirmationProcessor = useRef(null);
+  if (!emailConfirmationProcessor.current) {
+    emailConfirmationProcessor.current = createIdempotentCallbackProcessor();
+  }
   
   // App Global State
   const [activeMeal, setActiveMeal] = useState(null);
@@ -153,6 +233,9 @@ export default function App() {
   const [toastMessage, setToastMessage] = useState(null);
   const [dailyRequestSequence] = useState(createRequestSequence);
   const [profileRequestSequence] = useState(createRequestSequence);
+  const personalDataScopeRef = useRef(null);
+  if (!personalDataScopeRef.current) personalDataScopeRef.current = createPersonalDataScope();
+  const expiredAuthUserId = useRef(null);
   const reducedMotion = useReducedMotion();
   const dailyDate = new Date().toISOString().slice(0, 10);
 
@@ -163,39 +246,319 @@ export default function App() {
     }, 3500);
   };
 
-  const loadDaily = useCallback(async () => {
+  const clearPersonalState = useCallback(() => {
+    dailyRequestSequence.next();
+    profileRequestSequence.next();
+    resetPersonalDataState({
+      setTodayLog,
+      setDailyTotals,
+      setDailyLoading,
+      setDailyError,
+      setMealActionError,
+      setIsSavingMeal,
+      setPendingMealId,
+      setIsLoggingAnalysisMeal,
+      setUserProfile,
+      setProfileLoading,
+      setProfileLoaded,
+      setProfileError,
+      setProfileActionError,
+      setIsSavingProfile,
+    }, {
+      initialProfile: INITIAL_USER_PROFILE,
+      emptyTotals: EMPTY_NUTRITION_TOTALS,
+    });
+    setToastMessage(null);
+  }, [dailyRequestSequence, profileRequestSequence]);
+
+  const openAuth = (mode = 'login', returnTab = 'home') => {
+    setAuthReturnTab(returnTab);
+    setAuthMode(mode);
+    setAuthRedirectNotice('');
+    setAuthRedirectError('');
+    setActiveTab('auth');
+  };
+
+  const navigateToTab = (tab) => {
+    if (AUTH_REQUIRED_TABS.has(tab) && authLoading) {
+      pendingProtectedTab.current = tab;
+      setAuthReturnTab(tab);
+      setAuthMode('login');
+      setActiveTab('auth');
+      return;
+    }
+    if (AUTH_REQUIRED_TABS.has(tab) && !authUser) {
+      openAuth('login', tab);
+      return;
+    }
+    setActiveTab(tab);
+  };
+
+  const completeAuthentication = (successMessage = 'You are signed in to NutriAI.') => {
+    const nextTab = AUTH_REQUIRED_TABS.has(authReturnTab) || authReturnTab === 'results'
+      ? authReturnTab
+      : 'home';
+    setAuthRedirectNotice('');
+    setAuthRedirectError('');
+    setActiveTab(nextTab);
+    showToast(successMessage);
+  };
+
+  const clearRedirectFromAddressBar = () => {
+    const cleanUrl = cleanAuthRedirectUrl(window.location.href);
+    window.history.replaceState({}, document.title, cleanUrl);
+  };
+
+  const clearEmailConfirmationTokenFromAddressBar = () => {
+    const cleanUrl = cleanEmailConfirmationTokenFromUrl(window.location.href);
+    window.history.replaceState({}, document.title, cleanUrl);
+  };
+
+  const getAuthRedirectOptions = () => ({
+    publicAppUrl: import.meta.env.VITE_APP_PUBLIC_URL,
+    isDevelopment: Boolean(import.meta.env.DEV),
+  });
+
+  const getSupabaseClient = () => {
+    if (!supabaseClientRef.current) {
+      throw new Error('Authentication is still starting. Wait a moment and try again.');
+    }
+    return supabaseClientRef.current;
+  };
+
+  const handleProtectedAuthFailure = useCallback((error, snapshot) => {
+    if (![401, 403].includes(error?.status) || !personalDataScopeRef.current.isCurrent(snapshot)) return;
+    if (expiredAuthUserId.current === snapshot.userId) return;
+
+    expiredAuthUserId.current = snapshot.userId;
+    if (error?.code === 'SESSION_USER_CHANGED') {
+      personalDataScopeRef.current.invalidate();
+      clearPersonalState();
+      setAuthUser(null);
+      if (activeTab === 'results') {
+        setMealActionError('Your signed-in account changed. Try logging this food again.');
+      }
+      return;
+    }
+
+    const returnTab = AUTH_REQUIRED_TABS.has(activeTab) ? activeTab : null;
+    personalDataScopeRef.current.invalidate();
+    clearPersonalState();
+    setAuthUser(null);
+
+    if (returnTab) {
+      setAuthReturnTab(returnTab);
+      setAuthMode('login');
+      setAuthRedirectNotice('');
+      setAuthRedirectError('Your session expired. Sign in again to access your personal nutrition data.');
+      setActiveTab('auth');
+    } else if (activeTab === 'results') {
+      setMealActionError('Your session expired. Sign in again to add this food to your meal history.');
+    }
+
+    const client = supabaseClientRef.current;
+    if (client) void signOutLocally(client).catch(() => {});
+  }, [activeTab, clearPersonalState]);
+
+  useEffect(() => {
+    const redirectInfo = initialAuthRedirectInfo;
+
+    let active = true;
+    let unsubscribe = () => {};
+
+    if (emailConfirmationToken.current) clearEmailConfirmationTokenFromAddressBar();
+
+    import('./lib/supabase.js').then(({ supabase }) => {
+      if (!active) return;
+      supabaseClientRef.current = supabase;
+      unsubscribe = subscribeToVerifiedAuthState(supabase, {
+        onUser: (user) => {
+          const nextUserId = user?.id ?? null;
+          if (personalDataScopeRef.current.setUserId(nextUserId)) {
+            expiredAuthUserId.current = null;
+            clearPersonalState();
+          }
+          setAuthUser(user);
+        },
+        onPasswordRecovery: (user) => {
+          if (passwordRecoveryHandled.current) return;
+          passwordRecoveryHandled.current = true;
+          if (user) {
+            setRecoveryReady(true);
+            setAuthRedirectFlow(null);
+            setAuthRedirectError('');
+            setAuthRedirectNotice('');
+            setAuthMode('reset');
+            setActiveTab('auth');
+            clearRedirectFromAddressBar();
+          } else {
+            setRecoveryReady(false);
+            setAuthRedirectFlow(null);
+            setAuthMode('forgot');
+            setAuthRedirectError('This password reset link is not valid for a verified account. Request a new reset email.');
+            setActiveTab('auth');
+            clearRedirectFromAddressBar();
+          }
+        },
+        onInitialSession: (user) => {
+          if (initialAuthSessionHandled.current) return;
+          initialAuthSessionHandled.current = true;
+          setAuthLoading(false);
+
+          if (redirectInfo.error) {
+            setAuthRedirectFlow(null);
+            setAuthMode(redirectInfo.flow === 'recovery' ? 'forgot' : 'login');
+            setAuthRedirectError(redirectInfo.error);
+            setAuthRedirectNotice('');
+            setActiveTab('auth');
+            clearRedirectFromAddressBar();
+            return;
+          }
+
+          if (redirectInfo.flow === 'verify') {
+            setAuthRedirectFlow(null);
+            if (emailConfirmationToken.current) {
+              setAuthMode('verify');
+              setActiveTab('auth');
+              clearRedirectFromAddressBar();
+              return;
+            }
+
+            const sdkConsumedCallback = initialHasAuthCallbackPayload
+              && !hasSupabaseAuthCallbackPayload(window.location.href);
+            if (user && sdkConsumedCallback) {
+              setAuthRedirectNotice('');
+              setActiveTab('home');
+              showToast('Your email was confirmed successfully. Welcome to NutriAI.');
+            } else {
+              setAuthMode('login');
+              setAuthRedirectNotice(user
+                ? 'This link did not return a confirmation response. Your current session is still checked separately; sign in or request a fresh confirmation email.'
+                : 'No verified confirmation response was received. Sign in if you have already confirmed your email, or request a fresh confirmation email.');
+              setActiveTab('auth');
+            }
+            clearRedirectFromAddressBar();
+          } else if (redirectInfo.flow === 'recovery') {
+            setAuthMode('reset');
+            setActiveTab('auth');
+          }
+
+          const requestedTab = pendingProtectedTab.current;
+          if (requestedTab) {
+            pendingProtectedTab.current = null;
+            if (user) {
+              setActiveTab(requestedTab);
+            } else {
+              setAuthReturnTab(requestedTab);
+              setAuthMode('login');
+              setActiveTab('auth');
+            }
+          }
+        },
+      });
+    }).catch(() => {
+      if (!active) return;
+      setAuthLoading(false);
+      setAuthRedirectFlow(null);
+      setAuthMode(redirectInfo.flow === 'recovery' ? 'forgot' : 'login');
+      setAuthRedirectError('Authentication could not start. Check the local Supabase configuration and reload.');
+      setActiveTab('auth');
+      clearRedirectFromAddressBar();
+    });
+
+    return () => {
+      active = false;
+      unsubscribe();
+      supabaseClientRef.current = null;
+    };
+  }, [clearPersonalState, initialAuthRedirectInfo, initialHasAuthCallbackPayload]);
+
+  useEffect(() => {
+    if (authRedirectFlow !== 'recovery' || authLoading || recoveryReady) return undefined;
+    const timer = window.setTimeout(() => {
+      setAuthRedirectFlow(null);
+      setAuthMode('forgot');
+      setAuthRedirectError('The reset link could not be verified. Request a fresh password reset email and open its latest link.');
+      clearRedirectFromAddressBar();
+    }, 8000);
+    return () => window.clearTimeout(timer);
+  }, [authRedirectFlow, authLoading, recoveryReady]);
+
+  useEffect(() => {
+    if (authUser) return;
+    if (AUTH_REQUIRED_TABS.has(activeTab)) setActiveTab('home');
+  }, [authUser, activeTab]);
+
+  useEffect(() => {
+    if (
+      !authLoading
+      && authUser
+      && activeTab === 'auth'
+      && authMode !== 'reset'
+      && authMode !== 'verify'
+      && !authRedirectError
+      && !authRedirectNotice
+    ) {
+      setActiveTab('home');
+    }
+  }, [authLoading, authUser, activeTab, authMode, authRedirectError, authRedirectNotice]);
+
+  const loadDaily = useCallback(async (requestedScope) => {
+    const snapshot = requestedScope || personalDataScopeRef.current.capture();
+    if (
+      !authUser
+      || authUser.id !== snapshot.userId
+      || !personalDataScopeRef.current.isCurrent(snapshot)
+      || !PERSONAL_DATA_API_ENABLED
+    ) return;
     const requestId = dailyRequestSequence.next();
+    const isCurrentRequest = () => (
+      dailyRequestSequence.isCurrent(requestId)
+      && personalDataScopeRef.current.isCurrent(snapshot)
+    );
     setDailyLoading(true);
     setDailyError('');
 
     try {
       const [mealResponse, nutritionResponse] = await Promise.all([
-        fetchMealsForDate(dailyDate),
-        fetchDailyNutrition(dailyDate),
+        fetchMealsForDate(dailyDate, { expectedUserId: snapshot.userId }),
+        fetchDailyNutrition(dailyDate, { expectedUserId: snapshot.userId }),
       ]);
 
       if (!Array.isArray(mealResponse.items) || !nutritionResponse.totals) {
         throw new Error('The backend returned an unexpected daily nutrition response.');
       }
 
-      if (!dailyRequestSequence.isCurrent(requestId)) return;
+      if (!isCurrentRequest()) return;
       setTodayLog({ meals: mealResponse.items.map(toDashboardMeal) });
       setDailyTotals(nutritionResponse.totals);
     } catch (error) {
-      if (dailyRequestSequence.isCurrent(requestId)) {
+      handleProtectedAuthFailure(error, snapshot);
+      if (isCurrentRequest()) {
         setDailyError(error instanceof Error ? error.message : 'Unable to load daily nutrition.');
       }
     } finally {
-      if (dailyRequestSequence.isCurrent(requestId)) setDailyLoading(false);
+      if (isCurrentRequest()) setDailyLoading(false);
     }
-  }, [dailyDate, dailyRequestSequence]);
+  }, [authUser, dailyDate, dailyRequestSequence, handleProtectedAuthFailure]);
 
-  const loadProfile = useCallback(async () => {
+  const loadProfile = useCallback(async (requestedScope) => {
+    const snapshot = requestedScope || personalDataScopeRef.current.capture();
+    if (
+      !authUser
+      || authUser.id !== snapshot.userId
+      || !personalDataScopeRef.current.isCurrent(snapshot)
+      || !PERSONAL_DATA_API_ENABLED
+    ) return;
     const requestId = profileRequestSequence.next();
+    const isCurrentRequest = () => (
+      profileRequestSequence.isCurrent(requestId)
+      && personalDataScopeRef.current.isCurrent(snapshot)
+    );
     setProfileLoading(true);
     setProfileError('');
     try {
-      const profile = await fetchProfile();
+      const profile = await fetchProfile({ expectedUserId: snapshot.userId });
       if (
         !profile
         || !Object.prototype.hasOwnProperty.call(profile, 'targets')
@@ -204,7 +567,7 @@ export default function App() {
       ) {
         throw new Error('The backend returned an unexpected profile response.');
       }
-      if (!profileRequestSequence.isCurrent(requestId)) return;
+      if (!isCurrentRequest()) return;
       setUserProfile((previous) => ({
         ...previous,
         dietary_preferences: profile.dietary_preferences,
@@ -212,21 +575,26 @@ export default function App() {
       }));
       setProfileLoaded(true);
     } catch (error) {
-      if (profileRequestSequence.isCurrent(requestId)) {
+      handleProtectedAuthFailure(error, snapshot);
+      if (isCurrentRequest()) {
         setProfileError(error instanceof Error ? error.message : 'Unable to load your profile.');
       }
     } finally {
-      if (profileRequestSequence.isCurrent(requestId)) setProfileLoading(false);
+      if (isCurrentRequest()) setProfileLoading(false);
     }
-  }, [profileRequestSequence]);
+  }, [authUser, profileRequestSequence, handleProtectedAuthFailure]);
 
   useEffect(() => {
-    if (activeTab === 'daily') void loadDaily();
-  }, [activeTab, loadDaily]);
+    if (activeTab === 'daily' && authUser && PERSONAL_DATA_API_ENABLED) void loadDaily();
+  }, [activeTab, authUser, loadDaily]);
 
   useEffect(() => {
-    if (activeTab === 'daily' || activeTab === 'profile' || activeTab === 'results') void loadProfile();
-  }, [activeTab, loadProfile]);
+    if (
+      PERSONAL_DATA_API_ENABLED
+      && authUser
+      && (activeTab === 'daily' || activeTab === 'profile' || activeTab === 'results')
+    ) void loadProfile();
+  }, [activeTab, authUser, loadProfile]);
 
   // Scroll to top on tab change
   useEffect(() => {
@@ -283,6 +651,16 @@ export default function App() {
   };
 
   const handleLogMeal = async (mealRequest) => {
+    if (!authUser) {
+      openAuth('login', 'results');
+      return false;
+    }
+    const snapshot = personalDataScopeRef.current.capture();
+    if (authUser.id !== snapshot.userId || !personalDataScopeRef.current.isCurrent(snapshot)) return false;
+    if (!PERSONAL_DATA_API_ENABLED) {
+      setMealActionError('Personal meal logging is paused until account-specific API access is enabled.');
+      return false;
+    }
     if (!mealRequest || (!mealRequest.preset_id && !mealRequest.name)) {
       setMealActionError('This food lookup is missing the meal information needed to log it.');
       return false;
@@ -290,52 +668,76 @@ export default function App() {
     setMealActionError('');
     setIsLoggingAnalysisMeal(true);
     try {
-      const savedMeal = await createMeal(mealRequest);
-      await loadDaily();
+      const savedMeal = await createMeal(mealRequest, { expectedUserId: snapshot.userId });
+      if (!personalDataScopeRef.current.isCurrent(snapshot)) return false;
+      await loadDaily(snapshot);
+      if (!personalDataScopeRef.current.isCurrent(snapshot)) return false;
       showToast(`Logged ${savedMeal.name} to today's nutrition.`);
       return true;
     } catch (error) {
-      setMealActionError(error instanceof Error ? error.message : 'Unable to log this preset meal.');
+      handleProtectedAuthFailure(error, snapshot);
+      if (personalDataScopeRef.current.isCurrent(snapshot)) {
+        setMealActionError(error instanceof Error ? error.message : 'Unable to log this preset meal.');
+      }
       return false;
     } finally {
-      setIsLoggingAnalysisMeal(false);
+      if (personalDataScopeRef.current.isCurrent(snapshot)) setIsLoggingAnalysisMeal(false);
     }
   };
 
   const handleRemoveMeal = async (mealId) => {
+    if (!authUser || !PERSONAL_DATA_API_ENABLED) return;
+    const snapshot = personalDataScopeRef.current.capture();
+    if (authUser.id !== snapshot.userId || !personalDataScopeRef.current.isCurrent(snapshot)) return;
     const mealToRemove = todayLog.meals.find((meal) => meal.id === mealId);
     setMealActionError('');
     setPendingMealId(mealId);
 
     try {
-      await deleteMeal(mealId);
-      await loadDaily();
+      await deleteMeal(mealId, { expectedUserId: snapshot.userId });
+      if (!personalDataScopeRef.current.isCurrent(snapshot)) return;
+      await loadDaily(snapshot);
+      if (!personalDataScopeRef.current.isCurrent(snapshot)) return;
       showToast(`Removed ${mealToRemove?.name || 'meal'} from daily log.`);
     } catch (error) {
-      setMealActionError(error instanceof Error ? error.message : 'Unable to delete this meal.');
+      handleProtectedAuthFailure(error, snapshot);
+      if (personalDataScopeRef.current.isCurrent(snapshot)) {
+        setMealActionError(error instanceof Error ? error.message : 'Unable to delete this meal.');
+      }
     } finally {
-      setPendingMealId(null);
+      if (personalDataScopeRef.current.isCurrent(snapshot)) setPendingMealId(null);
     }
   };
 
   const handleAddMealFromDaily = async (mealRequest) => {
+    if (!authUser || !PERSONAL_DATA_API_ENABLED) return false;
+    const snapshot = personalDataScopeRef.current.capture();
+    if (authUser.id !== snapshot.userId || !personalDataScopeRef.current.isCurrent(snapshot)) return false;
     setMealActionError('');
     setIsSavingMeal(true);
 
     try {
-      const savedMeal = await createMeal(mealRequest);
-      await loadDaily();
+      const savedMeal = await createMeal(mealRequest, { expectedUserId: snapshot.userId });
+      if (!personalDataScopeRef.current.isCurrent(snapshot)) return false;
+      await loadDaily(snapshot);
+      if (!personalDataScopeRef.current.isCurrent(snapshot)) return false;
       showToast(`Logged ${savedMeal.name} to today's nutrition.`);
       return true;
     } catch (error) {
-      setMealActionError(error instanceof Error ? error.message : 'Unable to save this meal.');
+      handleProtectedAuthFailure(error, snapshot);
+      if (personalDataScopeRef.current.isCurrent(snapshot)) {
+        setMealActionError(error instanceof Error ? error.message : 'Unable to save this meal.');
+      }
       return false;
     } finally {
-      setIsSavingMeal(false);
+      if (personalDataScopeRef.current.isCurrent(snapshot)) setIsSavingMeal(false);
     }
   };
 
   const handleUpdateProfile = async (updatedData) => {
+    if (!authUser || !PERSONAL_DATA_API_ENABLED) return false;
+    const snapshot = personalDataScopeRef.current.capture();
+    if (authUser.id !== snapshot.userId || !personalDataScopeRef.current.isCurrent(snapshot)) return false;
     setProfileActionError('');
     setUserProfile((previous) => ({
       ...previous,
@@ -357,7 +759,8 @@ export default function App() {
           carbs: Number(updatedData.targets.carbs),
           fats: Number(updatedData.targets.fats),
         },
-      });
+      }, { expectedUserId: snapshot.userId });
+      if (!personalDataScopeRef.current.isCurrent(snapshot)) return false;
       setUserProfile((previous) => ({
         ...previous,
         dietary_preferences: savedProfile.dietary_preferences,
@@ -368,11 +771,81 @@ export default function App() {
       return true;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to save your profile.';
-      setProfileActionError(message);
+      handleProtectedAuthFailure(error, snapshot);
+      if (personalDataScopeRef.current.isCurrent(snapshot)) setProfileActionError(message);
       return false;
     } finally {
-      setIsSavingProfile(false);
+      if (personalDataScopeRef.current.isCurrent(snapshot)) setIsSavingProfile(false);
     }
+  };
+
+  const handleLogout = async () => {
+    setIsSigningOut(true);
+    personalDataScopeRef.current.invalidate();
+    clearPersonalState();
+    setAuthUser(null);
+    setActiveTab('home');
+    try {
+      await signOutLocally(getSupabaseClient());
+      showToast('You have been signed out.');
+    } catch (error) {
+      showToast(friendlyAuthError(error, 'logout'));
+    } finally {
+      setIsSigningOut(false);
+    }
+  };
+
+  const handleEmailConfirmation = () => {
+    const callback = emailConfirmationToken.current;
+    if (!callback) {
+      throw new Error('This confirmation link is no longer available. Open the latest email link or sign in if already confirmed.');
+    }
+
+    return emailConfirmationProcessor.current(async () => {
+      try {
+        const result = await verifyEmailWithTokenHash(getSupabaseClient(), callback);
+        emailConfirmationToken.current = null;
+        setAuthRedirectFlow(null);
+        setAuthRedirectError('');
+        clearRedirectFromAddressBar();
+        if (result.authenticated) {
+          setAuthMode('login');
+          setActiveTab('home');
+        } else {
+          setAuthMode('login');
+          setAuthRedirectNotice('Email confirmed successfully. Sign in to continue.');
+          setActiveTab('auth');
+        }
+        return result;
+      } catch (error) {
+        emailConfirmationToken.current = null;
+        setAuthRedirectFlow(null);
+        setAuthMode('login');
+        setAuthRedirectError(friendlyAuthError(error, 'verify'));
+        setActiveTab('auth');
+        clearRedirectFromAddressBar();
+        throw error;
+      }
+    });
+  };
+
+  const handleResendVerification = (email) => resendSignupVerification(
+    getSupabaseClient(),
+    email,
+    getAuthRedirectOptions(),
+  ).then((result) => {
+    setAuthRedirectError('');
+    setAuthRedirectNotice('');
+    return result;
+  });
+
+  const handlePasswordResetComplete = () => {
+    setRecoveryReady(false);
+    setAuthRedirectFlow(null);
+    setAuthRedirectError('');
+    setAuthRedirectNotice('');
+    setActiveTab('home');
+    showToast('Your password has been updated.');
   };
 
   return (
@@ -397,7 +870,12 @@ export default function App() {
       {/* Main Navigation */}
       <Navbar 
         activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
+        setActiveTab={navigateToTab}
+        authUser={authUser}
+        authLoading={authLoading}
+        isSigningOut={isSigningOut}
+        onOpenAuth={openAuth}
+        onLogout={handleLogout}
       />
 
       {/* Dynamic Content Views */}
@@ -414,9 +892,9 @@ export default function App() {
               transition={{ duration: 0.3 }}
             >
               <HeroLanding 
-                onNavigateToAnalyzer={() => setActiveTab('analyzer')} 
-                onNavigateToDaily={() => setActiveTab('daily')}
-                setActiveTab={setActiveTab}
+                onNavigateToAnalyzer={() => navigateToTab('analyzer')}
+                onNavigateToDaily={() => navigateToTab('daily')}
+                setActiveTab={navigateToTab}
               />
             </motion.div>
           )}
@@ -447,18 +925,22 @@ export default function App() {
               transition={{ duration: 0.3 }}
             >
               <NutritionResults 
+                key={`results-${authUser?.id || 'signed-out'}`}
                 meal={activeMeal}
                 onLogMeal={handleLogMeal}
-                userTargets={userProfile.targets}
-                profileLoading={profileLoading}
-                profileLoaded={profileLoaded}
-                profileError={profileError}
-                onRetryProfile={loadProfile}
-                onNavigateToProfile={() => setActiveTab('profile')}
+                userTargets={PERSONAL_DATA_API_ENABLED && authUser ? userProfile.targets : null}
+                profileLoading={PERSONAL_DATA_API_ENABLED && authUser ? profileLoading : false}
+                profileLoaded={PERSONAL_DATA_API_ENABLED && authUser ? profileLoaded : false}
+                profileError={PERSONAL_DATA_API_ENABLED && authUser ? profileError : ''}
+                onRetryProfile={PERSONAL_DATA_API_ENABLED && authUser ? loadProfile : undefined}
+                onNavigateToProfile={() => navigateToTab('profile')}
                 logError={mealActionError}
                 isLoggingMeal={isLoggingAnalysisMeal}
-                onScanAnother={() => setActiveTab('analyzer')}
-                onNavigateToDashboard={() => setActiveTab('daily')}
+                canLogMeal={PERSONAL_DATA_API_ENABLED && Boolean(authUser)}
+                isAuthenticated={Boolean(authUser)}
+                onRequireAuth={() => openAuth('login', 'results')}
+                onScanAnother={() => navigateToTab('analyzer')}
+                onNavigateToDashboard={() => navigateToTab('daily')}
               />
             </motion.div>
           )}
@@ -472,26 +954,31 @@ export default function App() {
               exit={{ opacity: 0, y: -12 }}
               transition={{ duration: 0.3 }}
             >
-              <DailyDashboard 
-                todayLog={todayLog}
-                dailyTotals={dailyTotals}
-                dailyDate={dailyDate}
-                isLoading={dailyLoading}
-                loadError={dailyError}
-                actionError={mealActionError}
-                isSavingMeal={isSavingMeal}
-                pendingMealId={pendingMealId}
-                profileLoading={profileLoading}
-                profileLoaded={profileLoaded}
-                profileError={profileError}
-                onRetryProfile={loadProfile}
-                onNavigateToProfile={() => setActiveTab('profile')}
-                onRetry={loadDaily}
-                userProfile={userProfile}
-                onAddMealFromDaily={handleAddMealFromDaily}
-                onNavigateToAnalyzer={() => setActiveTab('analyzer')}
-                onRemoveMeal={handleRemoveMeal}
-              />
+              {PERSONAL_DATA_API_ENABLED ? (
+                <DailyDashboard
+                  key={`daily-${authUser?.id || 'signed-out'}`}
+                  todayLog={todayLog}
+                  dailyTotals={dailyTotals}
+                  dailyDate={dailyDate}
+                  isLoading={dailyLoading}
+                  loadError={dailyError}
+                  actionError={mealActionError}
+                  isSavingMeal={isSavingMeal}
+                  pendingMealId={pendingMealId}
+                  profileLoading={profileLoading}
+                  profileLoaded={profileLoaded}
+                  profileError={profileError}
+                  onRetryProfile={loadProfile}
+                  onNavigateToProfile={() => navigateToTab('profile')}
+                  onRetry={loadDaily}
+                  userProfile={userProfile}
+                  onAddMealFromDaily={handleAddMealFromDaily}
+                  onNavigateToAnalyzer={() => navigateToTab('analyzer')}
+                  onRemoveMeal={handleRemoveMeal}
+                />
+              ) : (
+                <PersonalDataPending section="nutrition journey" onExploreFood={() => navigateToTab('analyzer')} />
+              )}
             </motion.div>
           )}
 
@@ -504,15 +991,52 @@ export default function App() {
               exit={{ opacity: 0, y: -12 }}
               transition={{ duration: 0.3 }}
             >
-              <ProfileSettings 
-                userProfile={userProfile}
-                onUpdateProfile={handleUpdateProfile}
-                isLoading={profileLoading}
-                isLoaded={profileLoaded}
-                loadError={profileError}
-                actionError={profileActionError}
-                isSaving={isSavingProfile}
-                onRetry={loadProfile}
+              {PERSONAL_DATA_API_ENABLED ? (
+                <ProfileSettings
+                  key={`profile-${authUser?.id || 'signed-out'}`}
+                  userProfile={userProfile}
+                  onUpdateProfile={handleUpdateProfile}
+                  isLoading={profileLoading}
+                  isLoaded={profileLoaded}
+                  loadError={profileError}
+                  actionError={profileActionError}
+                  isSaving={isSavingProfile}
+                  onRetry={loadProfile}
+                />
+              ) : (
+                <PersonalDataPending section="profile" onExploreFood={() => navigateToTab('analyzer')} />
+              )}
+            </motion.div>
+          )}
+
+          {activeTab === 'auth' && (
+            <motion.div
+              key="auth"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.3 }}
+            >
+              <AuthScreen
+                mode={authMode}
+                onModeChange={(mode) => {
+                  setAuthMode(mode);
+                  setAuthRedirectError('');
+                  setAuthRedirectNotice('');
+                }}
+                onRegister={(values) => registerWithEmail(getSupabaseClient(), values, getAuthRedirectOptions())}
+                onLogin={(values) => loginWithEmail(getSupabaseClient(), values)}
+                onForgotPassword={(email) => sendPasswordReset(getSupabaseClient(), email, getAuthRedirectOptions())}
+                onResendVerification={handleResendVerification}
+                onConfirmEmail={handleEmailConfirmation}
+                onResetPassword={(password) => updatePassword(getSupabaseClient(), password)}
+                onAuthenticated={completeAuthentication}
+                onPasswordResetComplete={handlePasswordResetComplete}
+                authLoading={authLoading}
+                recoveryReady={recoveryReady}
+                redirectNotice={authRedirectNotice}
+                redirectError={authRedirectError}
+                onExploreFood={() => navigateToTab('analyzer')}
               />
             </motion.div>
           )}
@@ -521,7 +1045,7 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <Footer setActiveTab={setActiveTab} />
+      <Footer setActiveTab={navigateToTab} />
 
       </div>
 

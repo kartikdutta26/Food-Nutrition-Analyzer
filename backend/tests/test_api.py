@@ -1,8 +1,12 @@
+import logging
 from datetime import UTC, datetime
 
 import httpx
 import pytest
-from pymongo.errors import PyMongoError
+from fastapi.testclient import TestClient
+from pymongo.errors import ConfigurationError, PyMongoError
+
+from app.main import create_app
 
 
 def validation_errors(response):
@@ -24,6 +28,35 @@ def test_database_health_returns_503_when_ping_fails(client):
     response = client.get("/api/db-health")
     assert response.status_code == 503
     assert response.json()["detail"] == "MongoDB connection failed"
+
+
+def test_atlas_srv_startup_error_is_diagnostic_and_redacted(monkeypatch, caplog):
+    from app import main
+
+    synthetic_uri = "mongodb+srv://audit_user:do-not-log@cluster.example.invalid/nutriai"
+
+    def fail_during_srv_resolution(*args, **kwargs):
+        assert kwargs["connectTimeoutMS"] == 30000
+        raise ConfigurationError(
+            "The resolution lifetime expired after 21 seconds. DNS SRV resolution "
+            f"failed for {synthetic_uri}"
+        )
+
+    monkeypatch.setattr(main, "MONGODB_URI", synthetic_uri)
+    monkeypatch.setattr(main, "MongoClient", fail_during_srv_resolution)
+
+    with caplog.at_level(logging.ERROR, logger="app.main"):
+        with pytest.raises(RuntimeError, match="DNS SRV/TXT resolution failed") as error:
+            with TestClient(create_app()):
+                pass
+
+    assert "ConfigurationError" in str(error.value)
+    assert "ConfigurationError" in caplog.text
+    assert "DNS SRV/TXT resolution failed" in caplog.text
+    assert synthetic_uri not in str(error.value)
+    assert synthetic_uri not in caplog.text
+    assert "audit_user" not in caplog.text
+    assert "do-not-log" not in caplog.text
 
 
 def test_food_analysis_returns_labeled_sample_preset(client):
@@ -369,8 +402,8 @@ def test_usda_analysis_reports_food_matches_without_required_nutrients(client, m
     assert "found this food but does not report complete" in response.json()["detail"]
 
 
-def test_usda_lookup_meal_preserves_source_and_serving_in_storage(client, database):
-    response = client.post(
+def test_usda_lookup_meal_preserves_source_and_serving_in_storage(authenticated_client, database):
+    response = authenticated_client.post(
         "/api/meals",
         json={
             "name": "Apples, raw, with skin",
@@ -393,16 +426,16 @@ def test_usda_lookup_meal_preserves_source_and_serving_in_storage(client, databa
     assert meal["data_source"] == "usda_food_data_central"
     assert meal["fdc_id"] == 12345
     assert meal["serving"]["description"] == "1 cup, sliced (109 g)"
-    assert database["meals"].documents[0]["data_source"] == "usda_food_data_central"
+    assert database["user_meals"].documents[0]["data_source"] == "usda_food_data_central"
 
-    daily = client.get("/api/nutrition/daily", params={"date": meal["meal_day"]})
+    daily = authenticated_client.get("/api/nutrition/daily", params={"date": meal["meal_day"]})
     assert daily.status_code == 200
     assert daily.json()["totals"]["calories"] == 56.68
     assert daily.json()["totals"]["fiber"] is None
 
 
-def test_usda_meal_requires_lookup_metadata(client):
-    response = client.post(
+def test_usda_meal_requires_lookup_metadata(authenticated_client):
+    response = authenticated_client.post(
         "/api/meals",
         json={
             "name": "Food",
@@ -447,8 +480,8 @@ def test_malformed_json_explains_how_to_fix_body(client):
     assert "not valid JSON" in validation_errors(response)[0]["msg"]
 
 
-def test_create_list_daily_totals_and_delete_meal(client):
-    response = client.post(
+def test_create_list_daily_totals_and_delete_meal(authenticated_client, database):
+    response = authenticated_client.post(
         "/api/meals",
         json={
             "preset_id": "paneer-rice",
@@ -461,25 +494,27 @@ def test_create_list_daily_totals_and_delete_meal(client):
     assert meal["data_source"] == "sample_preset"
     assert meal["consumed_at"].startswith("2026-10-15T08:00:00")
 
-    listing = client.get("/api/meals", params={"date": "2026-10-15"})
+    listing = authenticated_client.get("/api/meals", params={"date": "2026-10-15"})
     assert listing.status_code == 200
     assert listing.json()["count"] == 1
     assert listing.json()["items"][0]["id"] == meal["id"]
 
-    daily = client.get("/api/nutrition/daily?date=2026-10-15")
+    daily = authenticated_client.get("/api/nutrition/daily?date=2026-10-15")
     assert daily.status_code == 200
     assert daily.json()["date"] == "2026-10-15"
     assert daily.json()["meal_count"] == 1
     assert daily.json()["totals"]["calories"] == 620
     assert daily.json()["totals"]["protein"] == 28
 
-    deleted = client.delete(f"/api/meals/{meal['id']}")
+    deleted = authenticated_client.delete(f"/api/meals/{meal['id']}")
     assert deleted.status_code == 204
-    assert client.get("/api/meals").json()["count"] == 0
+    assert authenticated_client.get("/api/meals").json()["count"] == 0
+    assert database["meals"].documents == []
+    assert database["user_meals"].documents == []
 
 
-def test_create_manual_meal_stores_caller_provided_values(client):
-    response = client.post(
+def test_create_manual_meal_stores_caller_provided_values(authenticated_client, database):
+    response = authenticated_client.post(
         "/api/meals",
         json={
             "name": "Homemade soup",
@@ -496,32 +531,33 @@ def test_create_manual_meal_stores_caller_provided_values(client):
     assert response.json()["data_source"] == "user_provided"
     assert response.json()["meal_slot"] == "Dinner"
     assert response.json()["nutrition"]["fiber"] == 0
+    assert database["user_meals"].documents[0]["user_id"] == "11111111-1111-4111-8111-111111111111"
 
 
-def test_meal_validation_and_missing_delete(client):
-    invalid_nutrition = client.post(
+def test_meal_validation_and_missing_delete(authenticated_client):
+    invalid_nutrition = authenticated_client.post(
         "/api/meals",
         json={"name": "Bad meal", "nutrition": {"calories": -1}},
     )
     assert invalid_nutrition.status_code == 422
 
-    missing_source = client.post("/api/meals", json={"meal_slot": "Lunch"})
+    missing_source = authenticated_client.post("/api/meals", json={"meal_slot": "Lunch"})
     assert missing_source.status_code == 422
     assert "'preset_id' alone" in validation_errors(missing_source)[0]["msg"]
 
-    missing_custom_name = client.post(
+    missing_custom_name = authenticated_client.post(
         "/api/meals",
         json={"nutrition": {"calories": 100, "protein": 5, "carbs": 10, "fats": 2}},
     )
     assert "'name' is required" in validation_errors(missing_custom_name)[0]["msg"]
 
-    missing_custom_nutrition = client.post(
+    missing_custom_nutrition = authenticated_client.post(
         "/api/meals",
         json={"name": "Soup"},
     )
     assert "'nutrition' is required" in validation_errors(missing_custom_nutrition)[0]["msg"]
 
-    incomplete_macros = client.post(
+    incomplete_macros = authenticated_client.post(
         "/api/meals",
         json={"name": "Soup", "nutrition": {"calories": 100}},
     )
@@ -529,7 +565,7 @@ def test_meal_validation_and_missing_delete(client):
     assert any(error["loc"] == ["body", "nutrition", "protein"] for error in missing_fields)
     assert any("non-negative number" in error["msg"] for error in missing_fields)
 
-    invalid_slot = client.post(
+    invalid_slot = authenticated_client.post(
         "/api/meals",
         json={
             "preset_id": "paneer-rice",
@@ -538,54 +574,55 @@ def test_meal_validation_and_missing_delete(client):
     )
     assert "meal_slot" in validation_errors(invalid_slot)[0]["msg"]
 
-    invalid_timestamp = client.post(
+    invalid_timestamp = authenticated_client.post(
         "/api/meals",
         json={"preset_id": "paneer-rice", "consumed_at": "tomorrow afternoon"},
     )
     assert "ISO 8601 datetime" in validation_errors(invalid_timestamp)[0]["msg"]
 
-    invalid_id = client.delete("/api/meals/not-an-object-id")
+    invalid_id = authenticated_client.delete("/api/meals/not-an-object-id")
     assert invalid_id.status_code == 422
     assert "24-character hexadecimal" in validation_errors(invalid_id)[0]["msg"]
 
-    missing_id = client.delete("/api/meals/64d111111111111111111111")
+    missing_id = authenticated_client.delete("/api/meals/64d111111111111111111111")
     assert missing_id.status_code == 404
 
 
-def test_meal_database_error_returns_service_unavailable(client, database):
-    database["meals"].failure = PyMongoError("simulated failure")
-    response = client.get("/api/meals")
+def test_meal_database_error_returns_service_unavailable(authenticated_client, database):
+    database["user_meals"].failure = PyMongoError("simulated failure")
+    response = authenticated_client.get("/api/meals")
     assert response.status_code == 503
     assert response.json()["detail"] == "MongoDB operation failed"
 
 
-def test_meal_list_query_validation_messages(client):
-    invalid_date = client.get("/api/meals", params={"date": "15-10-2026"})
+def test_meal_list_query_validation_messages(authenticated_client):
+    invalid_date = authenticated_client.get("/api/meals", params={"date": "15-10-2026"})
     assert "YYYY-MM-DD" in validation_errors(invalid_date)[0]["msg"]
 
-    too_small = client.get("/api/meals", params={"limit": 0})
+    too_small = authenticated_client.get("/api/meals", params={"limit": 0})
     assert "'limit' must be at least 1" in validation_errors(too_small)[0]["msg"]
 
-    too_large = client.get("/api/meals", params={"limit": 501})
+    too_large = authenticated_client.get("/api/meals", params={"limit": 501})
     assert "'limit' must be at most 500" in validation_errors(too_large)[0]["msg"]
 
 
-def test_daily_nutrition_requires_valid_iso_date(client):
-    missing = client.get("/api/nutrition/daily")
+def test_daily_nutrition_requires_valid_iso_date(authenticated_client):
+    missing = authenticated_client.get("/api/nutrition/daily")
     assert "?date=YYYY-MM-DD" in validation_errors(missing)[0]["msg"]
 
-    invalid = client.get("/api/nutrition/daily", params={"date": "yesterday"})
+    invalid = authenticated_client.get("/api/nutrition/daily", params={"date": "yesterday"})
     assert "ISO date format YYYY-MM-DD" in validation_errors(invalid)[0]["msg"]
 
 
-def test_profile_get_returns_unconfigured_targets_and_patch_updates_profile(client, database):
-    initial = client.get("/api/profile")
+def test_profile_get_returns_unconfigured_targets_and_patch_updates_profile(authenticated_client, database):
+    initial = authenticated_client.get("/api/profile")
     assert initial.status_code == 200
     assert initial.json()["dietary_preferences"] == []
     assert initial.json()["targets"] is None
     assert database["profiles"].documents == []
+    assert database["user_profiles"].documents[0]["user_id"] == "11111111-1111-4111-8111-111111111111"
 
-    updated = client.patch(
+    updated = authenticated_client.patch(
         "/api/profile",
         json={
             "dietary_preferences": ["Vegetarian", "vegetarian", "Dairy-free"],
@@ -596,23 +633,23 @@ def test_profile_get_returns_unconfigured_targets_and_patch_updates_profile(clie
     assert updated.json()["dietary_preferences"] == ["Vegetarian", "Dairy-free"]
     assert updated.json()["targets"]["protein"] == 115
     assert updated.json()["updated_at"] is not None
-    assert client.get("/api/profile").json()["targets"]["calories"] == 2100
+    assert authenticated_client.get("/api/profile").json()["targets"]["calories"] == 2100
 
 
-def test_profile_rejects_empty_patch_and_invalid_targets(client):
-    empty = client.patch("/api/profile", json={})
+def test_profile_rejects_empty_patch_and_invalid_targets(authenticated_client):
+    empty = authenticated_client.patch("/api/profile", json={})
     assert "'dietary_preferences' or 'targets'" in validation_errors(empty)[0]["msg"]
 
-    null_preferences = client.patch(
+    null_preferences = authenticated_client.patch(
         "/api/profile",
         json={"dietary_preferences": None},
     )
     assert "cannot be null" in validation_errors(null_preferences)[0]["msg"]
 
-    null_targets = client.patch("/api/profile", json={"targets": None})
+    null_targets = authenticated_client.patch("/api/profile", json={"targets": None})
     assert "'targets' cannot be null" in validation_errors(null_targets)[0]["msg"]
 
-    missing_target = client.patch(
+    missing_target = authenticated_client.patch(
         "/api/profile",
         json={"targets": {"calories": 2000, "protein": 100, "carbs": 200}},
     )
@@ -621,91 +658,101 @@ def test_profile_rejects_empty_patch_and_invalid_targets(client):
         for error in validation_errors(missing_target)
     )
 
-    invalid = client.patch(
+    invalid = authenticated_client.patch(
         "/api/profile",
         json={"targets": {"calories": 0, "protein": 80, "carbs": 180, "fats": 50}},
     )
     assert "'targets.calories' must be greater than 0" in validation_errors(invalid)[0]["msg"]
 
 
-def test_profile_preferences_explain_invalid_items_and_unknown_fields(client):
-    blank_item = client.patch("/api/profile", json={"dietary_preferences": ["  "]})
+def test_profile_preferences_explain_invalid_items_and_unknown_fields(authenticated_client):
+    blank_item = authenticated_client.patch("/api/profile", json={"dietary_preferences": ["  "]})
     blank_errors = validation_errors(blank_item)
     assert any("dietary_preferences" in error["loc"] for error in blank_errors)
     assert any("at least 1 character" in error["msg"] for error in blank_errors)
 
-    extra_field = client.patch(
+    extra_field = authenticated_client.patch(
         "/api/profile",
         json={"daily_target": 2000},
     )
     assert "not supported" in validation_errors(extra_field)[0]["msg"]
 
 
-def test_profile_can_be_created_by_patch_without_prior_get(client):
-    response = client.patch(
+def test_profile_can_be_created_by_patch_without_prior_get(authenticated_client, database):
+    response = authenticated_client.patch(
         "/api/profile",
         json={"dietary_preferences": ["Vegan"]},
     )
     assert response.status_code == 200
     assert response.json()["dietary_preferences"] == ["Vegan"]
     assert response.json()["targets"] is None
+    assert database["user_profiles"].documents[0]["dietary_preferences"] == ["Vegan"]
 
 
-def test_profile_get_returns_unconfigured_targets_without_write_permission(client, database):
-    database["profiles"].read_only = True
+def test_profile_get_requires_write_access_to_create_user_defaults(authenticated_client, database):
+    database["user_profiles"].read_only = True
 
-    response = client.get("/api/profile")
+    response = authenticated_client.get("/api/profile")
 
-    assert response.status_code == 200
-    assert response.json()["targets"] is None
+    assert response.status_code == 503
     assert database["profiles"].documents == []
 
 
-def test_profile_get_normalizes_legacy_placeholder_even_with_update_timestamp(client, database):
-    database["profiles"].documents.append({
+def test_profile_endpoints_leave_legacy_profile_unread_and_unchanged(authenticated_client, database):
+    legacy_profile = {
         "_id": "default",
-        "dietary_preferences": [],
+        "dietary_preferences": ["legacy-private-preference"],
         "targets": {"calories": 1, "protein": 1, "carbs": 1, "fats": 1},
         "updated_at": datetime(2026, 10, 1, tzinfo=UTC),
-    })
-    database["profiles"].read_only = True
+    }
+    database["profiles"].documents.append(legacy_profile)
 
-    response = client.get("/api/profile")
+    response = authenticated_client.get("/api/profile")
+    update = authenticated_client.patch(
+        "/api/profile",
+        json={"dietary_preferences": ["New account preference"]},
+    )
 
     assert response.status_code == 200
     assert response.json()["targets"] is None
-    assert database["profiles"].documents[0]["targets"] == {
-        "calories": 1,
-        "protein": 1,
-        "carbs": 1,
-        "fats": 1,
-    }
+    assert response.json()["dietary_preferences"] == []
+    assert update.status_code == 200
+    assert database["profiles"].documents == [legacy_profile]
+    assert database["user_profiles"].documents[0]["dietary_preferences"] == [
+        "New account preference",
+    ]
 
 
-def test_profile_preserves_explicitly_saved_one_value_targets(client):
+def test_profile_preserves_explicitly_saved_one_value_targets(authenticated_client):
     targets = {"calories": 1, "protein": 1, "carbs": 1, "fats": 1}
 
-    updated = client.patch("/api/profile", json={"targets": targets})
+    updated = authenticated_client.patch("/api/profile", json={"targets": targets})
 
     assert updated.status_code == 200
     assert updated.json()["targets"] == targets
-    assert client.get("/api/profile").json()["targets"] == targets
+    assert authenticated_client.get("/api/profile").json()["targets"] == targets
 
 
-def test_profile_database_error_returns_service_unavailable(client, database):
-    database["profiles"].failure = PyMongoError("simulated failure")
-    response = client.get("/api/profile")
+def test_profile_database_error_returns_service_unavailable(authenticated_client, database):
+    database["user_profiles"].failure = PyMongoError("simulated failure")
+    response = authenticated_client.get("/api/profile")
     assert response.status_code == 503
 
 
-def test_profile_update_database_error_returns_service_unavailable(client, database):
-    database["profiles"].failure = PyMongoError("simulated failure")
-    response = client.patch(
+def test_profile_update_database_error_returns_service_unavailable(
+    authenticated_client,
+    database,
+    caplog,
+):
+    database["user_profiles"].failure = PyMongoError("simulated database URI detail")
+    response = authenticated_client.patch(
         "/api/profile",
         json={"targets": {"calories": 2000, "protein": 100, "carbs": 200, "fats": 60}},
     )
     assert response.status_code == 503
     assert response.json()["detail"] == "MongoDB operation failed"
+    assert "MongoDB operation failed for /api/profile (PyMongoError)" in caplog.text
+    assert "simulated database URI detail" not in caplog.text
 
 
 def test_cors_allows_local_vite_origin(client):
@@ -714,10 +761,12 @@ def test_cors_allows_local_vite_origin(client):
         headers={
             "Origin": "http://localhost:5173",
             "Access-Control-Request-Method": "GET",
+            "Access-Control-Request-Headers": "authorization",
         },
     )
     assert response.status_code == 200
     assert response.headers["access-control-allow-origin"] == "http://localhost:5173"
+    assert "authorization" in response.headers["access-control-allow-headers"].lower()
 
 
 @pytest.mark.parametrize(

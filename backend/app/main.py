@@ -1,3 +1,4 @@
+import logging
 import os
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -10,7 +11,11 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pymongo import MongoClient
-from pymongo.errors import PyMongoError
+from pymongo.errors import (
+    ConfigurationError,
+    PyMongoError,
+    ServerSelectionTimeoutError,
+)
 
 from app.api.food import router as food_router
 from app.api.meals import router as meals_router
@@ -26,6 +31,7 @@ from app.schemas.nutrition import (
 
 
 load_dotenv(Path(__file__).resolve().parents[1] / ".env")
+_LOGGER = logging.getLogger(__name__)
 
 MONGODB_URI = os.getenv("MONGODB_URI")
 MONGODB_DATABASE = os.getenv("MONGODB_DATABASE", "nutriai_db")
@@ -121,28 +127,95 @@ def _validation_message(error: dict) -> str:
     return message
 
 
+def _mongodb_startup_diagnostic(error: PyMongoError) -> str:
+    """Return a useful startup diagnosis without exposing URI or credential text."""
+    message = str(error).lower()
+
+    if isinstance(error, ConfigurationError):
+        if any(
+            marker in message
+            for marker in ("dns", "srv", "resolution", "nameserver")
+        ):
+            return (
+                "DNS SRV/TXT resolution failed or timed out. Check the machine's DNS "
+                "resolver and network access to the Atlas cluster."
+            )
+        return (
+            "MongoDB connection string configuration is invalid. Check its scheme, "
+            "Atlas hostname, and DNS records."
+        )
+
+    if isinstance(error, ServerSelectionTimeoutError):
+        return (
+            "No Atlas server became reachable before the selection timeout. Check "
+            "DNS/network access and the Atlas IP access list."
+        )
+
+    if any(marker in message for marker in ("certificate", "tls", "ssl")):
+        return (
+            "TLS connection setup failed. Check system CA certificates and Atlas "
+            "TLS connectivity."
+        )
+
+    if any(marker in message for marker in ("authentication failed", "auth failed")):
+        return (
+            "MongoDB authentication failed. Check the configured database user's "
+            "credentials and role."
+        )
+
+    if any(marker in message for marker in ("timeout", "timed out")):
+        return (
+            "The MongoDB connection timed out. Check network access and the Atlas "
+            "IP access list."
+        )
+
+    return (
+        "MongoDB reported a startup configuration or connection error. Check Atlas "
+        "connectivity and configuration."
+    )
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     if not MONGODB_URI:
         raise RuntimeError("MONGODB_URI is missing from the .env file")
 
-    client = MongoClient(
-        MONGODB_URI,
-        tlsCAFile=certifi.where(),
-        serverSelectionTimeoutMS=5000,
-    )
-
-    app.state.mongodb_client = client
-    app.state.database = client[MONGODB_DATABASE]
-
+    client = None
     try:
+        # mongodb+srv URI parsing performs DNS SRV/TXT lookups in the constructor,
+        # so construction must be inside this startup error boundary as well.
+        client = MongoClient(
+            MONGODB_URI,
+            tlsCAFile=certifi.where(),
+            # PyMongo also uses connectTimeoutMS as the SRV/TXT lookup lifetime.
+            # A 30s window accommodates the slow DNS responses observed here.
+            connectTimeoutMS=30000,
+            serverSelectionTimeoutMS=5000,
+        )
+        app.state.mongodb_client = client
+        app.state.database = client[MONGODB_DATABASE]
         client.admin.command("ping")
         initialize_database(app.state.database)
-        print("MongoDB Atlas connected successfully!")
+    except PyMongoError as exc:
+        diagnostic = _mongodb_startup_diagnostic(exc)
+        _LOGGER.error(
+            "MongoDB startup failed (exception_type=%s): %s",
+            type(exc).__name__,
+            diagnostic,
+        )
+        if client is not None:
+            client.close()
+        raise RuntimeError(
+            f"MongoDB startup failed ({type(exc).__name__}): {diagnostic}"
+        ) from None
+
+    _LOGGER.info("MongoDB Atlas connected successfully")
+    try:
         yield
     finally:
-        client.close()
-        print("MongoDB connection closed.")
+        if client is not None:
+            client.close()
+        _LOGGER.info("MongoDB connection closed")
 
 
 def create_app(*, lifespan_context=lifespan) -> FastAPI:
@@ -157,7 +230,7 @@ def create_app(*, lifespan_context=lifespan) -> FastAPI:
         allow_origins=CORS_ORIGINS,
         allow_credentials=False,
         allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
-        allow_headers=["Content-Type"],
+        allow_headers=["Content-Type", "Authorization"],
     )
 
     @application.exception_handler(PyMongoError)
@@ -165,6 +238,12 @@ def create_app(*, lifespan_context=lifespan) -> FastAPI:
         request: Request,
         exc: PyMongoError,
     ) -> JSONResponse:
+        # Do not log exception text: driver errors can include database details.
+        _LOGGER.error(
+            "MongoDB operation failed for %s (%s)",
+            request.url.path,
+            type(exc).__name__,
+        )
         return JSONResponse(
             status_code=503,
             content={"detail": "MongoDB operation failed"},

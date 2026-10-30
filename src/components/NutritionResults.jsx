@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import {
   AlertCircle,
   ArrowLeft,
+  ArrowRight,
   CheckCircle,
   Dumbbell,
   Flame,
@@ -75,6 +76,9 @@ export default function NutritionResults({
   onRetryProfile,
   logError = '',
   isLoggingMeal = false,
+  canLogMeal = true,
+  isAuthenticated = false,
+  onRequireAuth,
   onScanAnother,
   onNavigateToDashboard,
 }) {
@@ -301,22 +305,34 @@ export default function NutritionResults({
           <div className="w-10 h-10 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center font-bold">🥗</div>
           <div>
             <p className="font-bold text-slate-800 text-sm">Add this food to your meal log?</p>
-            <p className="text-xs text-slate-500">{isSample ? 'The backend stores the standard sample preset serving.' : `The backend stores ${portionMultiplier}× ${meal.serving?.description || 'the USDA serving'} with its USDA source and food ID.`}</p>
+            <p className="text-xs text-slate-500">{canLogMeal
+              ? (isSample ? 'The backend stores the standard sample preset serving.' : `The backend stores ${portionMultiplier}× ${meal.serving?.description || 'the USDA serving'} with its USDA source and food ID.`)
+              : isAuthenticated
+                ? 'Sign in is required to save this food to your meal history.'
+                : 'Sign in to save this food to your personal meal history.'}</p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <label className="sr-only" htmlFor="analysis-meal-slot">Meal slot</label>
-          <select id="analysis-meal-slot" value={mealSlot} onChange={(event) => setMealSlot(event.target.value)} disabled={hasLogged || isLoggingMeal} className="px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700">
-            <option value="Breakfast">Breakfast</option><option value="Lunch">Lunch</option><option value="Dinner">Dinner</option><option value="Snack">Snack</option>
-          </select>
-          <motion.button
-            variants={popButtonVariants} initial="initial" whileHover="hover" whileTap="tap"
-            onClick={handleLogToDaily}
-            disabled={hasLogged || isLoggingMeal || (isSample && portionMultiplier !== 1)}
-            className={`btn-pop flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm shadow-pop cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${hasLogged ? 'bg-emerald-600 text-white' : 'bg-gradient-to-r from-teal-600 to-teal-500 text-white'}`}
-          >
-            {hasLogged ? <><CheckCircle className="w-4 h-4" /><span>Logged to Daily Nutrition</span></> : <><PlusCircle className="w-4 h-4 text-teal-100" /><span>{isLoggingMeal ? 'Saving…' : isUSDA ? 'Log This Serving' : 'Log Standard Serving'}</span></>}
-          </motion.button>
+          {canLogMeal ? (
+            <>
+              <label className="sr-only" htmlFor="analysis-meal-slot">Meal slot</label>
+              <select id="analysis-meal-slot" value={mealSlot} onChange={(event) => setMealSlot(event.target.value)} disabled={hasLogged || isLoggingMeal} className="px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700">
+                <option value="Breakfast">Breakfast</option><option value="Lunch">Lunch</option><option value="Dinner">Dinner</option><option value="Snack">Snack</option>
+              </select>
+              <motion.button
+                variants={popButtonVariants} initial="initial" whileHover="hover" whileTap="tap"
+                onClick={handleLogToDaily}
+                disabled={hasLogged || isLoggingMeal || (isSample && portionMultiplier !== 1)}
+                className={`btn-pop flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm shadow-pop cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${hasLogged ? 'bg-emerald-600 text-white' : 'bg-gradient-to-r from-teal-600 to-teal-500 text-white'}`}
+              >
+                {hasLogged ? <><CheckCircle className="w-4 h-4" /><span>Logged to Daily Nutrition</span></> : <><PlusCircle className="w-4 h-4 text-teal-100" /><span>{isLoggingMeal ? 'Saving…' : isUSDA ? 'Log This Serving' : 'Log Standard Serving'}</span></>}
+              </motion.button>
+            </>
+          ) : isAuthenticated ? (
+            <span role="status" className="max-w-xs text-right text-xs font-semibold text-slate-500">Sign in is required to save this food to your meal history.</span>
+          ) : (
+            <button type="button" onClick={onRequireAuth} className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-gradient-to-r from-orange-200 to-teal-200 px-5 py-3 text-sm font-extrabold text-teal-950 shadow-sm">Sign in to NutriAI <ArrowRight className="h-4 w-4" /></button>
+          )}
           {hasLogged && <button onClick={onNavigateToDashboard} className="px-5 py-3 rounded-full bg-teal-50 text-teal-700 hover:bg-teal-100 font-bold text-sm border border-teal-200 transition-colors">View Daily Nutrition →</button>}
         </div>
       </div>

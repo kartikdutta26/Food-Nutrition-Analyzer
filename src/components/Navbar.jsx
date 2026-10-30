@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { ArrowUpRight, BarChart3, CalendarDays, Camera, Menu, Salad, Sparkles, UserRound, X } from 'lucide-react';
+import { ArrowUpRight, BarChart3, CalendarDays, Camera, LogOut, Menu, Salad, Sparkles, UserRound, X } from 'lucide-react';
 
 const navItems = [
   { id: 'home', label: 'Home', icon: Salad },
@@ -9,7 +9,15 @@ const navItems = [
   { id: 'results', label: 'Analysis results', icon: BarChart3 },
 ];
 
-export default function Navbar({ activeTab, setActiveTab }) {
+export default function Navbar({
+  activeTab,
+  setActiveTab,
+  authUser = null,
+  authLoading = false,
+  isSigningOut = false,
+  onOpenAuth,
+  onLogout,
+}) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const reducedMotion = useReducedMotion();
 
@@ -52,6 +60,24 @@ export default function Navbar({ activeTab, setActiveTab }) {
               <UserRound size={16} />
               <span>Profile</span>
             </button>
+            {authLoading ? (
+              <span role="status" className="max-w-32 truncate text-[10px] font-bold text-slate-500">Checking account…</span>
+            ) : authUser ? (
+              <>
+                <span className="max-w-32 truncate text-[10px] font-bold text-teal-900" title={authUser.user_metadata?.full_name || authUser.email}>
+                  {authUser.user_metadata?.full_name || authUser.email}
+                </span>
+                <button type="button" className="profile-shortcut" onClick={onLogout} disabled={isSigningOut}>
+                  <LogOut size={15} />
+                  <span>{isSigningOut ? 'Signing out…' : 'Sign out'}</span>
+                </button>
+              </>
+            ) : (
+              <button type="button" className="profile-shortcut" onClick={() => onOpenAuth?.('login')}>
+                <UserRound size={15} />
+                <span>Sign in</span>
+              </button>
+            )}
             <button className="nav-cta" onClick={() => navigate('analyzer')}>
               <Sparkles size={15} />
               <span>Try NutriAI</span>
@@ -86,6 +112,20 @@ export default function Navbar({ activeTab, setActiveTab }) {
               <button className={`nav-link nav-link--mobile${activeTab === 'profile' ? ' is-active' : ''}`} onClick={() => navigate('profile')} aria-current={activeTab === 'profile' ? 'page' : undefined}>
                 <UserRound size={16} /><span>Profile &amp; goals</span>
               </button>
+              {authLoading ? (
+                <p role="status" className="px-3 py-2 text-xs font-semibold text-slate-500">Checking account…</p>
+              ) : authUser ? (
+                <div className="flex items-center justify-between gap-3 px-3 py-2">
+                  <span className="min-w-0 truncate text-xs font-bold text-teal-900">{authUser.user_metadata?.full_name || authUser.email}</span>
+                  <button type="button" onClick={() => { onLogout?.(); setMobileOpen(false); }} disabled={isSigningOut} className="inline-flex shrink-0 items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-rose-700 disabled:opacity-60">
+                    <LogOut size={14} /> {isSigningOut ? 'Signing out…' : 'Sign out'}
+                  </button>
+                </div>
+              ) : (
+                <button type="button" className="nav-link nav-link--mobile" onClick={() => { onOpenAuth?.('login'); setMobileOpen(false); }}>
+                  <UserRound size={16} /><span>Sign in / Create account</span>
+                </button>
+              )}
               <button className="mobile-nav-cta" onClick={() => navigate('analyzer')}><Camera size={16} /> Analyze a meal <ArrowUpRight size={15} /></button>
             </motion.nav>
           )}

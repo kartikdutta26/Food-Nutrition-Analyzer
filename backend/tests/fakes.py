@@ -23,6 +23,7 @@ class FakeCursor:
 class FakeCollection:
     def __init__(self):
         self.documents = []
+        self.indexes = []
         self.failure = None
         self.read_only = False
 
@@ -37,6 +38,7 @@ class FakeCollection:
     def create_index(self, *args, **kwargs):
         self._raise_if_failed()
         self._raise_if_read_only()
+        self.indexes.append({"keys": deepcopy(args[0]), **deepcopy(kwargs)})
         return kwargs.get("name", "fake_index")
 
     def insert_one(self, document):
