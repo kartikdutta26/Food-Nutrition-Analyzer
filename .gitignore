@@ -27,3 +27,8 @@ backend/.env
 backend/venv/
 backend/**/__pycache__/
 backend/.pytest_cache/
+# Agentic AI - Python environment and secrets
+agentic_ai/.venv/
+agentic_ai/.env
+agentic_ai/**/__pycache__/
+agentic_ai/.pytest_cache/
