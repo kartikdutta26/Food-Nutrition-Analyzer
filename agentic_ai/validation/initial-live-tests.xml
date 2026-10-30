@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="12" time="144.075" timestamp="2026-10-31T02:00:53.533763+05:30" hostname="LAPTOP-QFF05EOD"><testcase classname="tests.test_live_ollama" name="test_actual_qwen_extraction[indian-roti-dal-rice]" time="38.999"><system-out>--------------------------------- Captured Out ---------------------------------
+
+</system-out></testcase><testcase classname="tests.test_live_ollama" name="test_actual_qwen_extraction[indian-dosa-sambar]" time="14.916"><failure message="AssertionError: assert 'needs_clarification' == 'success'&#10;  &#10;  - success&#10;  + needs_clarification">live_agent = &lt;agentic_ai.agents.food_agent.FoodUnderstandingAgent object at 0x000001DDBD9D4590&gt;
+case = {'id': 'indian-dosa-sambar', 'text': 'I had one masala dosa and half a cup of sambar.', 'status': 'success', 'foods': ...y': 1, 'unit': 'piece', 'preparation': None}, {'name': 'sambar', 'quantity': 0.5, 'unit': 'cup', 'preparation': None}]}
+
+    @pytest.mark.parametrize("case", CASES, ids=[case["id"] for case in CASES])
+    def test_actual_qwen_extraction(live_agent, case):
+        result = live_agent.analyze(case["text"])
+        print(json.dumps({"case": case["id"], "input": case["text"], "model": live_agent.settings.model, "result": result.model_dump()}, ensure_ascii=True))
+&gt;       assert result.status == case["status"]
+E       AssertionError: assert 'needs_clarification' == 'success'
+E
+E         - success
+E         + needs_clarification
+
+agentic_ai\tests\test_live_ollama.py:31: AssertionError</failure><system-out>--------------------------------- Captured Out ---------------------------------
+
+</system-out></testcase><testcase classname="tests.test_live_ollama" name="test_actual_qwen_extraction[decimal-breakfast]" time="20.969"><system-out>--------------------------------- Captured Out ---------------------------------
+
+</system-out></testcase><testcase classname="tests.test_live_ollama" name="test_actual_qwen_extraction[international-chicken-broccoli]" time="16.753"><system-out>--------------------------------- Captured Out ---------------------------------
+
+</system-out></testcase><testcase classname="tests.test_live_ollama" name="test_actual_qwen_extraction[missing-and-ambiguous]" time="10.100"><system-out>--------------------------------- Captured Out ---------------------------------
+
+</system-out></testcase><testcase classname="tests.test_live_ollama" name="test_actual_qwen_extraction[repeated-apples]" time="9.373"><failure message="AssertionError: assert 'needs_clarification' == 'success'&#10;  &#10;  - success&#10;  + needs_clarification">live_agent = &lt;agentic_ai.agents.food_agent.FoodUnderstandingAgent object at 0x000001DDBD9D4590&gt;
+case = {'id': 'repeated-apples', 'text': 'I ate 1 apple and 2 apples.', 'status': 'success', 'foods': [{'name': 'apple', 'quantity': 1, 'unit': 'piece', 'preparation': None}, {'name': 'apple', 'quantity': 2, 'unit': 'piece', 'preparation': None}]}
+
+    @pytest.mark.parametrize("case", CASES, ids=[case["id"] for case in CASES])
+    def test_actual_qwen_extraction(live_agent, case):
+        result = live_agent.analyze(case["text"])
+        print(json.dumps({"case": case["id"], "input": case["text"], "model": live_agent.settings.model, "result": result.model_dump()}, ensure_ascii=True))
+&gt;       assert result.status == case["status"]
+E       AssertionError: assert 'needs_clarification' == 'success'
+E
+E         - success
+E         + needs_clarification
+
+agentic_ai\tests\test_live_ollama.py:31: AssertionError</failure><system-out>--------------------------------- Captured Out ---------------------------------
+
+</system-out></testcase><testcase classname="tests.test_live_ollama" name="test_actual_qwen_extraction[mixed-fraction]" time="6.983"><system-out>--------------------------------- Captured Out ---------------------------------
+
+</system-out></testcase><testcase classname="tests.test_live_ollama" name="test_actual_qwen_extraction[unicode-fraction]" time="6.383"><system-out>--------------------------------- Captured Out ---------------------------------
+
+</system-out></testcase><testcase classname="tests.test_live_ollama" name="test_actual_qwen_extraction[negative-quantity]" time="5.624"><system-out>--------------------------------- Captured Out ---------------------------------
+
+</system-out></testcase><testcase classname="tests.test_live_ollama" name="test_actual_qwen_extraction[quantity-range]" time="6.011"><system-out>--------------------------------- Captured Out ---------------------------------
+
+</system-out></testcase><testcase classname="tests.test_live_ollama" name="test_actual_qwen_extraction[non-food]" time="1.340"><system-out>--------------------------------- Captured Out ---------------------------------
+
+</system-out></testcase><testcase classname="tests.test_live_ollama" name="test_actual_qwen_extraction[embedded-instruction]" time="5.827"><system-out>--------------------------------- Captured Out ---------------------------------
+
+</system-out></testcase></testsuite></testsuites>
