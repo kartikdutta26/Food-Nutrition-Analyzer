@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence, useMotionValue, useReducedMotion, useScroll, useSpring, useTransform } from 'framer-motion';
-import { ShieldCheck } from 'lucide-react';
 import Navbar from './components/Navbar';
+import AuthPage from './components/AuthPage';
 import HeroLanding from './components/HeroLanding';
 import FoodAnalyzer from './components/FoodAnalyzer';
 import NutritionResults from './components/NutritionResults';
@@ -9,67 +9,8 @@ import DailyDashboard from './components/DailyDashboard';
 import ProfileSettings from './components/ProfileSettings';
 import AuthScreen from './components/AuthScreen';
 import Footer from './components/Footer';
-import { INITIAL_USER_PROFILE } from './data/mockMeals';
-import { createRequestSequence } from './utils/requestSequence';
-import { createPersonalDataScope, resetPersonalDataState } from './utils/personalDataScope';
-import {
-  cleanAuthRedirectUrl,
-  cleanEmailConfirmationTokenFromUrl,
-  createIdempotentCallbackProcessor,
-  friendlyAuthError,
-  getEmailConfirmationCallback,
-  getAuthRedirectInfo,
-  hasSupabaseAuthCallbackPayload,
-  loginWithEmail,
-  registerWithEmail,
-  resendSignupVerification,
-  sendPasswordReset,
-  signOutLocally,
-  subscribeToVerifiedAuthState,
-  updatePassword,
-  verifyEmailWithTokenHash,
-} from './lib/authFlows';
-import {
-  analyzeFood,
-  createMeal,
-  deleteMeal,
-  fetchDailyNutrition,
-  fetchMealsForDate,
-  fetchProfile,
-  updateProfile,
-} from './api/client';
-
-const EMPTY_NUTRITION_TOTALS = {
-  calories: 0,
-  protein: 0,
-  carbs: 0,
-  fats: 0,
-  fiber: 0,
-};
-
-const AUTH_REQUIRED_TABS = new Set(['daily', 'profile']);
-const PERSONAL_DATA_API_ENABLED = true;
-
-function toDashboardMeal(meal) {
-  const consumedAt = new Date(meal.consumed_at);
-
-  return {
-    id: meal.id,
-    name: meal.name,
-    slot: meal.meal_slot,
-    time: Number.isNaN(consumedAt.getTime())
-      ? 'Logged'
-      : consumedAt.toLocaleTimeString([], { timeZone: 'UTC', hour: '2-digit', minute: '2-digit' }),
-    calories: meal.nutrition.calories,
-    protein: meal.nutrition.protein,
-    carbs: meal.nutrition.carbs,
-    fats: meal.nutrition.fats,
-    fiber: meal.nutrition.fiber,
-    dataSource: meal.data_source,
-    fdcId: meal.fdc_id,
-    serving: meal.serving,
-  };
-}
+import { PRESET_MEALS, INITIAL_USER_PROFILE, INITIAL_TODAY_LOG } from './data/mockMeals';
+import { authClient, authConfigured } from './auth/authClient';
 
 function AmbientBackground() {
   const reducedMotion = useReducedMotion();
@@ -149,66 +90,62 @@ function AmbientBackground() {
   );
 }
 
-function PersonalDataPending({ section, onExploreFood }) {
-  return (
-    <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
-      <section aria-labelledby="personal-data-pending-title" className="rounded-3xl border border-white/80 bg-white/80 p-7 text-center shadow-card-soft backdrop-blur-xl sm:p-10">
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-white bg-teal-50 text-teal-800 shadow-sm">
-          <ShieldCheck className="h-6 w-6" aria-hidden="true" />
-        </div>
-        <span className="inline-flex rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[.15em] text-teal-800">Account connected</span>
-        <h1 id="personal-data-pending-title" className="mt-4 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">Your {section} is waiting for secure sync</h1>
-        <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-slate-600">
-          NutriAI is finishing account-specific access for saved profiles and meal history. Your personal nutrition data stays hidden until that connection is ready.
-        </p>
-        <button type="button" onClick={onExploreFood} className="mt-6 inline-flex items-center justify-center rounded-full border border-white/80 bg-gradient-to-r from-orange-200 to-teal-200 px-5 py-3 text-sm font-extrabold text-teal-950 shadow-sm">
-          Explore food analysis
-        </button>
-      </section>
-    </div>
-  );
-}
-
 export default function App() {
-  // Navigation: 'home' | 'analyzer' | 'results' | 'daily' | 'profile' | 'auth'
-  const [initialAuthRedirectInfo] = useState(() => getAuthRedirectInfo(
-    globalThis.window?.location?.href || '',
-  ));
-  const [initialEmailConfirmationCallback] = useState(() => getEmailConfirmationCallback(
-    globalThis.window?.location?.href || '',
-  ));
-  const [initialHasAuthCallbackPayload] = useState(() => hasSupabaseAuthCallbackPayload(
-    globalThis.window?.location?.href || '',
-  ));
-  const [activeTab, setActiveTab] = useState(() => (
-    initialAuthRedirectInfo.flow || initialAuthRedirectInfo.error ? 'auth' : 'home'
-  ));
-  const [authUser, setAuthUser] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true);
-  const [authMode, setAuthMode] = useState(() => (
-    initialAuthRedirectInfo.flow === 'recovery'
-      ? 'reset'
-      : initialEmailConfirmationCallback
-        ? 'verify'
-        : 'login'
-  ));
-  const [authReturnTab, setAuthReturnTab] = useState('home');
-  const [isSigningOut, setIsSigningOut] = useState(false);
-  const [recoveryReady, setRecoveryReady] = useState(false);
-  const [authRedirectFlow, setAuthRedirectFlow] = useState(() => (
-    initialAuthRedirectInfo.error ? null : initialAuthRedirectInfo.flow
-  ));
-  const [authRedirectNotice, setAuthRedirectNotice] = useState('');
-  const [authRedirectError, setAuthRedirectError] = useState(initialAuthRedirectInfo.error || '');
-  const pendingProtectedTab = useRef(null);
-  const supabaseClientRef = useRef(null);
-  const initialAuthSessionHandled = useRef(false);
-  const passwordRecoveryHandled = useRef(false);
-  const emailConfirmationToken = useRef(initialEmailConfirmationCallback);
-  const emailConfirmationProcessor = useRef(null);
-  if (!emailConfirmationProcessor.current) {
-    emailConfirmationProcessor.current = createIdempotentCallbackProcessor();
-  }
+  const [authSession, setAuthSession] = useState(null);
+  const [demoMode, setDemoMode] = useState(false);
+  const [authLoading, setAuthLoading] = useState(Boolean(authClient?.auth));
+  const [pathname, setPathname] = useState(window.location.pathname);
+
+  useEffect(() => {
+    const handlePopState = () => setPathname(window.location.pathname);
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  useEffect(() => {
+    if (!authClient?.auth) {
+      return undefined;
+    }
+
+    let active = true;
+    const { data: { subscription } } = authClient.auth.onAuthStateChange((_event, session) => {
+      if (active) setAuthSession(session);
+    });
+
+    authClient.auth.getSession().then(({ data, error }) => {
+      if (!active) return;
+      if (error) {
+        console.error('Unable to restore the authentication session:', error.message);
+        setAuthSession(null);
+      } else {
+        setAuthSession(data.session);
+      }
+      setAuthLoading(false);
+    }).catch((error) => {
+      if (!active) return;
+      console.error('Unable to restore the authentication session:', error);
+      setAuthSession(null);
+      setAuthLoading(false);
+    });
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const hasAppAccess = Boolean(authSession?.user) || (import.meta.env.DEV && demoMode);
+
+  useEffect(() => {
+    if (authLoading) return;
+    const targetPath = hasAppAccess ? '/' : '/login';
+    if (pathname !== targetPath) {
+      window.history.replaceState({}, '', targetPath);
+    }
+  }, [authLoading, hasAppAccess, pathname]);
+
+  // Navigation: 'home' | 'analyzer' | 'results' | 'daily' | 'profile'
+  const [activeTab, setActiveTab] = useState('home');
   
   // App Global State
   const [activeMeal, setActiveMeal] = useState(null);
@@ -231,13 +168,7 @@ export default function App() {
   const [profileActionError, setProfileActionError] = useState('');
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
-  const [dailyRequestSequence] = useState(createRequestSequence);
-  const [profileRequestSequence] = useState(createRequestSequence);
-  const personalDataScopeRef = useRef(null);
-  if (!personalDataScopeRef.current) personalDataScopeRef.current = createPersonalDataScope();
-  const expiredAuthUserId = useRef(null);
   const reducedMotion = useReducedMotion();
-  const dailyDate = new Date().toISOString().slice(0, 10);
 
   const showToast = (msg) => {
     setToastMessage(msg);
@@ -848,6 +779,71 @@ export default function App() {
     showToast('Your password has been updated.');
   };
 
+  const handleAuthenticate = async ({ mode, fullName, email, password }) => {
+    if (!authClient?.auth) {
+      return {
+        type: 'error',
+        message: 'Authentication is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env.local, then restart the dev server.',
+      };
+    }
+
+    const result = mode === 'signup'
+      ? await authClient.auth.signUp({ email, password, options: { data: { full_name: fullName } } })
+      : await authClient.auth.signInWithPassword({ email, password });
+
+    if (result.error) return { type: 'error', message: result.error.message };
+    if (mode === 'signup' && !result.data.session) {
+      return { type: 'success', message: 'Your account was created. Check your email to confirm it, then log in.' };
+    }
+    return {};
+  };
+
+  const handlePasswordReset = async (email) => {
+    if (!authClient?.auth) {
+      return {
+        type: 'error',
+        message: 'Password reset is unavailable until an authentication provider is configured.',
+      };
+    }
+
+    const { error } = await authClient.auth.resetPasswordForEmail(email);
+    if (error) return { type: 'error', message: error.message };
+    return { type: 'success', message: 'If an account exists for this address, a password reset email is on its way.' };
+  };
+
+  const handleSignOut = async () => {
+    setDemoMode(false);
+    if (!authClient?.auth) return;
+    const { error } = await authClient.auth.signOut();
+    if (error) showToast(`Could not sign out: ${error.message}`);
+  };
+
+  const handleExploreDemo = () => {
+    window.history.replaceState({}, '', '/');
+    setPathname('/');
+    setDemoMode(true);
+  };
+
+  if (authLoading) {
+    return (
+      <main className="auth-loading" role="status">
+        <span className="auth-spinner" aria-hidden="true" />
+        Restoring your secure session…
+      </main>
+    );
+  }
+
+  if (!hasAppAccess) {
+    return (
+      <AuthPage
+        onAuthenticate={handleAuthenticate}
+        onResetPassword={handlePasswordReset}
+        onExploreDemo={import.meta.env.DEV ? handleExploreDemo : undefined}
+        authConfigured={authConfigured}
+      />
+    );
+  }
+
   return (
     <div className="app-shell min-h-screen flex flex-col text-slate-800 font-sans selection:bg-teal-100 selection:text-teal-900">
       <AmbientBackground />
@@ -870,12 +866,9 @@ export default function App() {
       {/* Main Navigation */}
       <Navbar 
         activeTab={activeTab} 
-        setActiveTab={navigateToTab}
-        authUser={authUser}
-        authLoading={authLoading}
-        isSigningOut={isSigningOut}
-        onOpenAuth={openAuth}
-        onLogout={handleLogout}
+        setActiveTab={setActiveTab} 
+        onSignOut={handleSignOut}
+        demoMode={demoMode}
       />
 
       {/* Dynamic Content Views */}
@@ -892,9 +885,9 @@ export default function App() {
               transition={{ duration: 0.3 }}
             >
               <HeroLanding 
-                onNavigateToAnalyzer={() => navigateToTab('analyzer')}
-                onNavigateToDaily={() => navigateToTab('daily')}
-                setActiveTab={navigateToTab}
+                onNavigateToAnalyzer={() => setActiveTab('analyzer')} 
+                onNavigateToDaily={() => setActiveTab('daily')}
+                setActiveTab={setActiveTab}
               />
             </motion.div>
           )}
@@ -1046,6 +1039,8 @@ export default function App() {
 
       {/* Footer */}
       <Footer setActiveTab={navigateToTab} />
+
+      </div>
 
       </div>
 

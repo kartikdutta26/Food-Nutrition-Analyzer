@@ -37,7 +37,7 @@ const features = [
   {
     icon: Camera,
     title: 'Analyze your food',
-    text: 'Look up food nutrition from USDA FoodData Central or use a labeled sample preset.',
+    text: 'Add a meal photo and explore its estimated nutrition at a glance.',
     action: 'Try the analyzer',
     tab: 'analyzer',
     tint: 'peach',
@@ -45,7 +45,7 @@ const features = [
   {
     icon: BarChart3,
     title: 'Track daily nutrition',
-    text: 'Review calories and macros calculated from your saved meal records.',
+    text: 'Keep calories and macros in view as you build your everyday routine.',
     action: 'View your journey',
     tab: 'daily',
     tint: 'aqua',
@@ -53,24 +53,24 @@ const features = [
   {
     icon: Target,
     title: 'Set personal goals',
-    text: 'Save dietary preferences and daily calorie and macro targets.',
+    text: 'Shape nutrition targets around the goals and habits that matter to you.',
     action: 'Set your goals',
     tab: 'profile',
     tint: 'peach',
   },
   {
     icon: Brain,
-    title: 'Review food results',
-    text: 'See the nutrition fields and data source returned by the backend.',
-    action: 'View analysis results',
+    title: 'Understand your meals',
+    text: 'Review meal insights and practical ideas for finding a better balance.',
+    action: 'Explore smart analysis',
     tab: 'results',
     tint: 'aqua',
   },
 ];
 
 const steps = [
-  { number: '01', title: 'Enter a food name', text: 'Look up the matching food in USDA FoodData Central or select a sample preset.', icon: Camera },
-  { number: '02', title: 'Review nutrition', text: 'See calories, macros, serving information, and the data source returned by the API.', icon: Sparkles },
+  { number: '01', title: 'Add a meal', text: 'Upload a photo, use your camera, or choose a meal by name.', icon: Camera },
+  { number: '02', title: 'Explore the estimate', text: 'See a clear breakdown of calories, macros, and key nutrients.', icon: Sparkles },
   { number: '03', title: 'Make it yours', text: 'Log a meal and follow your daily goals as they take shape.', icon: CheckCircle2 },
 ];
 
@@ -91,7 +91,7 @@ export default function HeroLanding({ onNavigateToAnalyzer, onNavigateToDaily, s
               transition={{ duration: 0.5 }}
             >
               <span className="eyebrow-spark"><Sparkles size={14} /></span>
-              Food nutrition tracker
+              AI powered nutrition agent
             </motion.div>
 
             <motion.h1
@@ -111,7 +111,7 @@ export default function HeroLanding({ onNavigateToAnalyzer, onNavigateToDaily, s
               transition={{ duration: 0.6, delay: 0.18 }}
             >
               Your food. Your goals.<br />
-              <span>Nutrition data, clearly presented.</span>
+              <span>One intelligent nutrition agent.</span>
             </motion.p>
 
             <motion.p
@@ -120,7 +120,7 @@ export default function HeroLanding({ onNavigateToAnalyzer, onNavigateToDaily, s
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.26 }}
             >
-              Look up USDA nutrition for a food name or choose a sample preset, log meals, and compare your saved totals with nutrition targets.
+              Snap your meal, understand what’s on your plate, and get personalized insights. Let AI help you decide what to eat next.
             </motion.p>
 
             <motion.div
@@ -131,7 +131,7 @@ export default function HeroLanding({ onNavigateToAnalyzer, onNavigateToDaily, s
             >
               <button className="button button-primary" onClick={onNavigateToAnalyzer}>
                 <Camera size={18} />
-                Look up a food
+                Analyze my meal
                 <ArrowRight size={16} />
               </button>
               <button className="button button-glass" onClick={onNavigateToDaily}>
@@ -149,7 +149,7 @@ export default function HeroLanding({ onNavigateToAnalyzer, onNavigateToDaily, s
               <div className="proof-avatars" aria-hidden="true">
                 <span><Leaf size={13} /></span><span><Heart size={12} /></span><span><Salad size={13} /></span>
               </div>
-              <p><strong>Clear sample values,</strong> one meal at a time</p>
+              <p><strong>A little more clarity,</strong> one meal at a time</p>
             </motion.div>
           </div>
 
@@ -162,8 +162,8 @@ export default function HeroLanding({ onNavigateToAnalyzer, onNavigateToDaily, s
             <div className="hero-image-frame">
               <img
                 className="hero-food-image"
-                src="/nutriai-bowl.webp"
-                alt="A colorful grain bowl with avocado, chickpeas, leafy greens, tomatoes, and fresh herbs"
+                src="/nutriai-3d-meal-bowl.png"
+                alt="3D-rendered grain bowl with avocado, chickpeas, tomatoes, greens, and floating ingredients"
                 fetchPriority="high"
               />
             </div>
@@ -171,7 +171,7 @@ export default function HeroLanding({ onNavigateToAnalyzer, onNavigateToDaily, s
         </div>
 
         <div className="landing-container hero-note-row">
-          <span><CheckCircle2 size={16} /> USDA food lookup</span>
+          <span><CheckCircle2 size={16} /> Simple meal insights</span>
           <span><CheckCircle2 size={16} /> Personal daily goals</span>
           <span><CheckCircle2 size={16} /> Your food, your pace</span>
         </div>
@@ -206,7 +206,7 @@ export default function HeroLanding({ onNavigateToAnalyzer, onNavigateToDaily, s
           <Reveal className="how-intro">
             <span className="eyebrow"><span className="eyebrow-dot" /> Simple by design</span>
             <h2 id="how-title">Good choices start with a little more insight.</h2>
-            <p>Look up a food name in USDA FoodData Central or use a sample preset, then track meals and daily totals from your saved records.</p>
+            <p>From a quick photo to a steady daily routine, NutriAI helps you connect the dots without making food feel complicated.</p>
             <button className="text-link" onClick={onNavigateToAnalyzer}>Try a meal analysis <ArrowRight size={16} /></button>
           </Reveal>
 
@@ -232,7 +232,7 @@ export default function HeroLanding({ onNavigateToAnalyzer, onNavigateToDaily, s
                 <span className="demo-tag">DEMO</span>
               </div>
               <div className="demo-meal-row">
-                <img src="/nutriai-bowl.webp" alt="Sample grain bowl" loading="lazy" />
+                <img src="/nutriai-3d-meal-bowl.png" alt="3D-rendered sample grain bowl with floating ingredients" loading="lazy" />
                 <div><strong>Colorful grain bowl</strong><small>Illustrative example</small><span><Clock3 size={13} /> A balanced lunch idea</span></div>
               </div>
               <div className="demo-calorie-row"><span>Estimated energy</span><strong>620 <small>kcal</small></strong></div>
@@ -249,7 +249,7 @@ export default function HeroLanding({ onNavigateToAnalyzer, onNavigateToDaily, s
           <Reveal className="demo-copy">
             <span className="eyebrow"><span className="eyebrow-dot" /> Your plate, in perspective</span>
             <h2 id="demo-title">See the whole picture, one meal at a time.</h2>
-            <p>Review backend sample nutrition, daily progress calculated from saved meals, and your saved targets in one calm, easy-to-read space.</p>
+            <p>Get a simple view of meal estimates, daily progress, and practical nutrition insights in one calm, easy-to-read space.</p>
             <ul className="check-list">
               <li><CheckCircle2 size={17} /> Meal details at a glance</li>
               <li><CheckCircle2 size={17} /> Daily progress that feels motivating</li>
@@ -265,7 +265,7 @@ export default function HeroLanding({ onNavigateToAnalyzer, onNavigateToDaily, s
           <Reveal className="personal-copy">
             <span className="eyebrow"><span className="eyebrow-dot" /> A routine that feels like yours</span>
             <h2 id="personal-title">Small, steady steps can add up.</h2>
-            <p>Save dietary preferences and supported nutrition targets. Biometrics and personal goals remain local to this browser session.</p>
+            <p>Set a goal, notice your patterns, and keep the parts of healthy eating that work for you. Your profile and daily tracker stay connected as you go.</p>
             <div className="personal-actions">
               <button className="button button-glass" onClick={() => goTo('profile')}><Target size={16} /> Personalize your goals</button>
               <button className="text-link" onClick={onNavigateToDaily}>View daily tracker <ArrowRight size={16} /></button>
@@ -294,7 +294,7 @@ export default function HeroLanding({ onNavigateToAnalyzer, onNavigateToDaily, s
             <h2>Make room for feeling good.</h2>
             <p>Start with what’s on your plate today. The next step can be a small one.</p>
             <div className="closing-actions">
-              <button className="button button-primary" onClick={onNavigateToAnalyzer}><Camera size={17} /> Look up a food <ArrowRight size={15} /></button>
+              <button className="button button-primary" onClick={onNavigateToAnalyzer}><Camera size={17} /> Analyze a meal <ArrowRight size={15} /></button>
               <button className="button button-glass" onClick={onNavigateToDaily}>Open daily tracker</button>
             </div>
           </Reveal>

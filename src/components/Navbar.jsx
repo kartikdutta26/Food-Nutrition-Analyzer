@@ -6,18 +6,10 @@ const navItems = [
   { id: 'home', label: 'Home', icon: Salad },
   { id: 'analyzer', label: 'Analyze food', icon: Camera },
   { id: 'daily', label: 'Nutrition journey', icon: CalendarDays },
-  { id: 'results', label: 'Analysis results', icon: BarChart3 },
+  { id: 'results', label: 'Smart analysis', icon: BarChart3 },
 ];
 
-export default function Navbar({
-  activeTab,
-  setActiveTab,
-  authUser = null,
-  authLoading = false,
-  isSigningOut = false,
-  onOpenAuth,
-  onLogout,
-}) {
+export default function Navbar({ activeTab, setActiveTab, onSignOut, demoMode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const reducedMotion = useReducedMotion();
 
@@ -56,28 +48,15 @@ export default function Navbar({
           </nav>
 
           <div className="nav-actions">
+            {demoMode && <span className="demo-mode-badge">Demo mode</span>}
             <button className={`profile-shortcut${activeTab === 'profile' ? ' is-active' : ''}`} onClick={() => navigate('profile')} aria-label="Profile and goals" aria-current={activeTab === 'profile' ? 'page' : undefined}>
               <UserRound size={16} />
               <span>Profile</span>
             </button>
-            {authLoading ? (
-              <span role="status" className="max-w-32 truncate text-[10px] font-bold text-slate-500">Checking account…</span>
-            ) : authUser ? (
-              <>
-                <span className="max-w-32 truncate text-[10px] font-bold text-teal-900" title={authUser.user_metadata?.full_name || authUser.email}>
-                  {authUser.user_metadata?.full_name || authUser.email}
-                </span>
-                <button type="button" className="profile-shortcut" onClick={onLogout} disabled={isSigningOut}>
-                  <LogOut size={15} />
-                  <span>{isSigningOut ? 'Signing out…' : 'Sign out'}</span>
-                </button>
-              </>
-            ) : (
-              <button type="button" className="profile-shortcut" onClick={() => onOpenAuth?.('login')}>
-                <UserRound size={15} />
-                <span>Sign in</span>
-              </button>
-            )}
+            <button className="profile-shortcut" type="button" onClick={onSignOut} aria-label={demoMode ? 'Exit demo' : 'Sign out'}>
+              <LogOut size={15} />
+              <span>{demoMode ? 'Exit demo' : 'Sign out'}</span>
+            </button>
             <button className="nav-cta" onClick={() => navigate('analyzer')}>
               <Sparkles size={15} />
               <span>Try NutriAI</span>
@@ -109,23 +88,13 @@ export default function Navbar({
               transition={{ duration: 0.18 }}
             >
               {renderItems(true)}
+              {demoMode && <span className="demo-mode-badge demo-mode-badge--mobile">Demo mode · sample data only</span>}
               <button className={`nav-link nav-link--mobile${activeTab === 'profile' ? ' is-active' : ''}`} onClick={() => navigate('profile')} aria-current={activeTab === 'profile' ? 'page' : undefined}>
                 <UserRound size={16} /><span>Profile &amp; goals</span>
               </button>
-              {authLoading ? (
-                <p role="status" className="px-3 py-2 text-xs font-semibold text-slate-500">Checking account…</p>
-              ) : authUser ? (
-                <div className="flex items-center justify-between gap-3 px-3 py-2">
-                  <span className="min-w-0 truncate text-xs font-bold text-teal-900">{authUser.user_metadata?.full_name || authUser.email}</span>
-                  <button type="button" onClick={() => { onLogout?.(); setMobileOpen(false); }} disabled={isSigningOut} className="inline-flex shrink-0 items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-rose-700 disabled:opacity-60">
-                    <LogOut size={14} /> {isSigningOut ? 'Signing out…' : 'Sign out'}
-                  </button>
-                </div>
-              ) : (
-                <button type="button" className="nav-link nav-link--mobile" onClick={() => { onOpenAuth?.('login'); setMobileOpen(false); }}>
-                  <UserRound size={16} /><span>Sign in / Create account</span>
-                </button>
-              )}
+              <button className="nav-link nav-link--mobile" type="button" onClick={onSignOut}>
+                <LogOut size={16} /><span>{demoMode ? 'Exit demo' : 'Sign out'}</span>
+              </button>
               <button className="mobile-nav-cta" onClick={() => navigate('analyzer')}><Camera size={16} /> Analyze a meal <ArrowUpRight size={15} /></button>
             </motion.nav>
           )}
