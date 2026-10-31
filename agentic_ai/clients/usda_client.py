@@ -17,9 +17,11 @@ MAX_BYTES = 4_000_000
 
 
 class USDAClient:
-    def __init__(self, settings=None, *, sleeper=time.sleep):
+    def __init__(self, settings=None, *, sleeper=time.sleep, attempt_observer=None, cache=True):
         self.settings = settings if settings is not None else NutritionSettings.from_environment()
         self.sleeper = sleeper
+        self.attempt_observer = attempt_observer
+        self.cache = cache
         self._details = {}
         self._searches = {}
 
@@ -30,6 +32,8 @@ class USDAClient:
         url = BASE_URL + path + "?" + urlencode({"api_key": secret.get_secret_value()})
         request = Request(url, data=json.dumps(payload).encode() if payload is not None else None, headers={"Accept": "application/json", "Content-Type": "application/json"})
         for attempt in range(self.settings.retries + 1):
+            if self.attempt_observer is not None:
+                self.attempt_observer()
             try:
                 with urlopen(request, timeout=self.settings.timeout_seconds) as response:
                     raw = response.read(MAX_BYTES + 1)
@@ -74,6 +78,8 @@ class USDAClient:
         raise AssertionError("Retry loop must return or raise")
 
     def search(self, query):
+        if not self.cache:
+            return self._request("/foods/search", {"query": query, "dataType": ["Foundation", "SR Legacy", "Survey (FNDDS)"], "pageSize": self.settings.page_size})
         if query not in self._searches:
             self._searches[query] = self._request("/foods/search", {"query": query, "dataType": ["Foundation", "SR Legacy", "Survey (FNDDS)"], "pageSize": self.settings.page_size})
         return self._searches[query]
@@ -81,6 +87,8 @@ class USDAClient:
     def food(self, fdc_id):
         if isinstance(fdc_id, bool) or not isinstance(fdc_id, int) or fdc_id <= 0:
             raise FoodNotFoundError("A positive integer USDA food ID is required.")
+        if not self.cache:
+            return self._request(f"/food/{fdc_id}"), datetime.now(timezone.utc).isoformat()
         if fdc_id not in self._details:
             self._details[fdc_id] = (self._request(f"/food/{fdc_id}"), datetime.now(timezone.utc).isoformat())
         return self._details[fdc_id]

@@ -1,0 +1,20 @@
+{
+  "Milestone 2": {
+    "passed": 133,
+    "skipped": 8,
+    "failed": 0,
+    "errors": 0
+  },
+  "Milestone 3": {
+    "passed": 120,
+    "skipped": 0,
+    "failed": 0,
+    "errors": 0
+  },
+  "Milestone 1": {
+    "passed": 124,
+    "skipped": 12,
+    "failed": 0,
+    "errors": 0
+  }
+}

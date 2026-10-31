@@ -176,3 +176,20 @@ on the backend adapter contract before any teammate-owned code changes.
 References: [Ollama structured outputs](https://docs.ollama.com/capabilities/structured-outputs),
 [Ollama chat API](https://docs.ollama.com/api/chat),
 [Pydantic validators](https://docs.pydantic.dev/latest/concepts/validators/).
+
+
+## Milestone 3: resumable agent orchestration
+
+`AgentOrchestrator` now connects the existing food and nutrition agents with
+bounded, owner-scoped sessions, atomic typed clarifications, targeted retries
+and safe execution traces. Existing M1/M2 entry points remain available.
+
+Run `python -B -m agentic_ai.orchestration_demo --offline-examples` from the
+repository root using the existing virtual environment. These examples are
+scripted and use authentic local USDA snapshots; they do not run Qwen3 or
+verify live USDA. `--text "I ate 2 rotis and cooked white rice."` uses actual
+local Qwen3 and accepts structured reply JSON on stdin.
+
+See [ORCHESTRATION.md](ORCHESTRATION.md) for contracts, file explanations,
+resource limits, integration guidance, fixture classification and commands.
+See [Milestone 3 validation](validation/milestone3/REPORT.md) for recorded results.

@@ -33,6 +33,7 @@ def summarize(items):
 
 
 def _summarize(items):
+    items = [item.model_copy(deep=True) for item in items]
     totals, subtotals, coverage = {}, {}, {}
     count = len(items)
     for name in NUTRIENTS:

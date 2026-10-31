@@ -1,0 +1,1541 @@
+{
+  "extraction_mode": "actual Ollama qwen3:4b-instruct inference on initial meal",
+  "clarification_mode": "predefined demonstration user replies: USDA small roti and measured 150 g rice",
+  "nutrition_mode": "existing authentic offline USDA snapshots; no live USDA verification",
+  "elapsed_seconds": 45.09,
+  "steps": [
+    {
+      "schema_version": "1.0",
+      "session_id": "sZhTk_OhNlDZLWL0pSzFMDUxdjAoTQf9rf4_44zd5I4",
+      "revision": 1,
+      "status": "awaiting_clarification",
+      "created_at": 1793442834.4858773,
+      "expires_at": 1793444634.4858773,
+      "extraction": {
+        "schema_version": "1.0",
+        "status": "needs_clarification",
+        "foods": [
+          {
+            "name": "roti",
+            "quantity": 2.0,
+            "quantity_text": "2",
+            "unit": "piece",
+            "preparation": null,
+            "source_text": "2 rotis",
+            "issues": []
+          },
+          {
+            "name": "white rice",
+            "quantity": null,
+            "quantity_text": null,
+            "unit": null,
+            "preparation": "cooked",
+            "source_text": "cooked white rice",
+            "issues": [
+              "missing_quantity",
+              "missing_unit"
+            ]
+          }
+        ],
+        "questions": [
+          "Please specify a positive quantity and serving unit for 'cooked white rice'."
+        ]
+      },
+      "nutrition": {
+        "schema_version": "1.0",
+        "status": "needs_clarification",
+        "items": [
+          {
+            "item_index": 0,
+            "food": {
+              "name": "roti",
+              "quantity": 2.0,
+              "quantity_text": "2",
+              "unit": "piece",
+              "preparation": null,
+              "source_text": "2 rotis",
+              "issues": []
+            },
+            "status": "needs_clarification",
+            "candidates": [
+              {
+                "fdc_id": 2707713,
+                "description": "Bread, chappatti or roti",
+                "data_type": "Survey (FNDDS)"
+              }
+            ],
+            "search_scope": "offline USDA snapshot: 10 records; not the complete USDA catalog",
+            "record": {
+              "provenance": {
+                "provider": "usda_snapshot",
+                "fdc_id": 2707713,
+                "description": "Bread, chappatti or roti",
+                "data_type": "Survey (FNDDS)",
+                "source_url": "https://fdc.nal.usda.gov/food-details/2707713/nutrients",
+                "retrieved_at": "2026-10-31T09:29:54.430152+00:00",
+                "publication_date": "10/31/2024",
+                "snapshot_sha256": "c3fde77650f6b10f4fa2f568a800464b34808cacb7bef239e40ea38a7c768937"
+              },
+              "basis_grams": "100",
+              "basis_description": "USDA nutrient amounts per 100 g edible food",
+              "nutrients": {
+                "calories": "299",
+                "protein": "7.85",
+                "carbs": "46.1",
+                "fats": "9.20",
+                "fiber": "9.70"
+              },
+              "nutrient_evidence": {
+                "calories": {
+                  "nutrient_id": 1008,
+                  "source_unit": "kcal",
+                  "source_amount": "299",
+                  "note": "Atwater specific > general > conventional kcal > kJ"
+                },
+                "protein": {
+                  "nutrient_id": 1003,
+                  "source_unit": "g",
+                  "source_amount": "7.85",
+                  "note": null
+                },
+                "carbs": {
+                  "nutrient_id": 1005,
+                  "source_unit": "g",
+                  "source_amount": "46.1",
+                  "note": null
+                },
+                "fats": {
+                  "nutrient_id": 1004,
+                  "source_unit": "g",
+                  "source_amount": "9.20",
+                  "note": null
+                },
+                "fiber": {
+                  "nutrient_id": 1079,
+                  "source_unit": "g",
+                  "source_amount": "9.70",
+                  "note": null
+                }
+              },
+              "portions": [
+                {
+                  "portion_id": "299426",
+                  "amount": "1",
+                  "unit": null,
+                  "gram_weight": "1",
+                  "description": "1 surface inch",
+                  "qualifiers": []
+                },
+                {
+                  "portion_id": "299424",
+                  "amount": "1",
+                  "unit": "piece",
+                  "gram_weight": "52",
+                  "description": "1 large chappatti or roti (8\")",
+                  "qualifiers": [
+                    "large"
+                  ]
+                },
+                {
+                  "portion_id": "299423",
+                  "amount": "1",
+                  "unit": "piece",
+                  "gram_weight": "40",
+                  "description": "1 medium chappatti or roti (7\")",
+                  "qualifiers": [
+                    "medium"
+                  ]
+                },
+                {
+                  "portion_id": "299422",
+                  "amount": "1",
+                  "unit": "piece",
+                  "gram_weight": "27",
+                  "description": "1 small chappatti or roti (6\")",
+                  "qualifiers": [
+                    "small"
+                  ]
+                }
+              ],
+              "issues": [
+                "invalid_portion_amount_or_weight"
+              ]
+            },
+            "portion": null,
+            "scale_factor": null,
+            "nutrition": {
+              "calories": null,
+              "protein": null,
+              "carbs": null,
+              "fats": null,
+              "fiber": null
+            },
+            "issues": [
+              {
+                "code": "ambiguous_portion",
+                "message": "Supply total edible grams or choose a compatible database portion, including size/form where required."
+              }
+            ],
+            "questions": [
+              "Item 0 (2 rotis): Supply total edible grams or choose a compatible database portion, including size/form where required."
+            ]
+          },
+          {
+            "item_index": 1,
+            "food": {
+              "name": "white rice",
+              "quantity": null,
+              "quantity_text": null,
+              "unit": null,
+              "preparation": "cooked",
+              "source_text": "cooked white rice",
+              "issues": [
+                "missing_quantity",
+                "missing_unit"
+              ]
+            },
+            "status": "needs_clarification",
+            "candidates": [
+              {
+                "fdc_id": 168878,
+                "description": "Rice, white, long-grain, regular, enriched, cooked",
+                "data_type": "SR Legacy"
+              }
+            ],
+            "search_scope": "offline USDA snapshot: 10 records; not the complete USDA catalog",
+            "record": {
+              "provenance": {
+                "provider": "usda_snapshot",
+                "fdc_id": 168878,
+                "description": "Rice, white, long-grain, regular, enriched, cooked",
+                "data_type": "SR Legacy",
+                "source_url": "https://fdc.nal.usda.gov/food-details/168878/nutrients",
+                "retrieved_at": "2026-10-31T09:29:54.430152+00:00",
+                "publication_date": "4/1/2019",
+                "snapshot_sha256": "c3fde77650f6b10f4fa2f568a800464b34808cacb7bef239e40ea38a7c768937"
+              },
+              "basis_grams": "100",
+              "basis_description": "USDA nutrient amounts per 100 g edible food",
+              "nutrients": {
+                "calories": "130.00000000",
+                "protein": "2.69000000",
+                "carbs": "28.17000000",
+                "fats": "0.28000000",
+                "fiber": "0.40000000"
+              },
+              "nutrient_evidence": {
+                "calories": {
+                  "nutrient_id": 1008,
+                  "source_unit": "kcal",
+                  "source_amount": "130.00000000",
+                  "note": "Atwater specific > general > conventional kcal > kJ"
+                },
+                "protein": {
+                  "nutrient_id": 1003,
+                  "source_unit": "g",
+                  "source_amount": "2.69000000",
+                  "note": null
+                },
+                "carbs": {
+                  "nutrient_id": 1005,
+                  "source_unit": "g",
+                  "source_amount": "28.17000000",
+                  "note": null
+                },
+                "fats": {
+                  "nutrient_id": 1004,
+                  "source_unit": "g",
+                  "source_amount": "0.28000000",
+                  "note": null
+                },
+                "fiber": {
+                  "nutrient_id": 1079,
+                  "source_unit": "g",
+                  "source_amount": "0.40000000",
+                  "note": null
+                }
+              },
+              "portions": [
+                {
+                  "portion_id": "83928",
+                  "amount": "1.00000000",
+                  "unit": "cup",
+                  "gram_weight": "158.00000000",
+                  "description": "cup",
+                  "qualifiers": []
+                }
+              ],
+              "issues": []
+            },
+            "portion": null,
+            "scale_factor": null,
+            "nutrition": {
+              "calories": null,
+              "protein": null,
+              "carbs": null,
+              "fats": null,
+              "fiber": null
+            },
+            "issues": [
+              {
+                "code": "missing_quantity",
+                "message": "Supply total edible grams or choose a compatible database portion, including size/form where required."
+              }
+            ],
+            "questions": [
+              "Item 1 (cooked white rice): Supply total edible grams or choose a compatible database portion, including size/form where required."
+            ]
+          }
+        ],
+        "complete_totals": {
+          "calories": null,
+          "protein": null,
+          "carbs": null,
+          "fats": null,
+          "fiber": null
+        },
+        "known_subtotals": {
+          "calories": null,
+          "protein": null,
+          "carbs": null,
+          "fats": null,
+          "fiber": null
+        },
+        "coverage": {
+          "calories": {
+            "known_items": 0,
+            "total_items": 2,
+            "complete": false
+          },
+          "protein": {
+            "known_items": 0,
+            "total_items": 2,
+            "complete": false
+          },
+          "carbs": {
+            "known_items": 0,
+            "total_items": 2,
+            "complete": false
+          },
+          "fats": {
+            "known_items": 0,
+            "total_items": 2,
+            "complete": false
+          },
+          "fiber": {
+            "known_items": 0,
+            "total_items": 2,
+            "complete": false
+          }
+        },
+        "total_items": 2,
+        "resolved_items": 0,
+        "questions": [
+          "Item 0 (2 rotis): Supply total edible grams or choose a compatible database portion, including size/form where required.",
+          "Item 1 (cooked white rice): Supply total edible grams or choose a compatible database portion, including size/form where required."
+        ],
+        "note": "Coverage counts food items, not food weight. Database reference values do not establish a homemade recipe's composition."
+      },
+      "questions": [
+        {
+          "question_id": "RM7rVzmkox1IqlgREZHrnFSh8qJKEFmbsLJsEyggVhc",
+          "item_id": "nsvRslpauK2h4aJWnNNvXUD6IhtnaKR-z8hf8Sl6z1w",
+          "item_index": 0,
+          "reason": "ambiguous_portion",
+          "allowed_actions": [
+            "leave_unresolved",
+            "refine_food",
+            "quantity",
+            "measured_grams",
+            "select_portion"
+          ],
+          "candidates": [
+            {
+              "fdc_id": 2707713,
+              "description": "Bread, chappatti or roti",
+              "data_type": "Survey (FNDDS)"
+            }
+          ],
+          "portions": [
+            {
+              "portion_id": "299424",
+              "amount": "1",
+              "unit": "piece",
+              "gram_weight": "52",
+              "description": "1 large chappatti or roti (8\")",
+              "qualifiers": [
+                "large"
+              ]
+            },
+            {
+              "portion_id": "299423",
+              "amount": "1",
+              "unit": "piece",
+              "gram_weight": "40",
+              "description": "1 medium chappatti or roti (7\")",
+              "qualifiers": [
+                "medium"
+              ]
+            },
+            {
+              "portion_id": "299422",
+              "amount": "1",
+              "unit": "piece",
+              "gram_weight": "27",
+              "description": "1 small chappatti or roti (6\")",
+              "qualifiers": [
+                "small"
+              ]
+            }
+          ]
+        },
+        {
+          "question_id": "H9mGvJk_eL_PBs7g0yCg4sznmr5RZY0XIlA2-42FQEA",
+          "item_id": "bf9DBkkiqpT7JGQ6ebJuMZKoKOg_XOCvSrgFEMbawbs",
+          "item_index": 1,
+          "reason": "missing_quantity",
+          "allowed_actions": [
+            "leave_unresolved",
+            "refine_food",
+            "quantity",
+            "measured_grams"
+          ],
+          "candidates": [
+            {
+              "fdc_id": 168878,
+              "description": "Rice, white, long-grain, regular, enriched, cooked",
+              "data_type": "SR Legacy"
+            }
+          ],
+          "portions": []
+        }
+      ],
+      "evidence": [],
+      "trace": [
+        {
+          "sequence": 1,
+          "revision": 1,
+          "stage": "extraction",
+          "event": "started",
+          "item_id": null,
+          "reason_code": null,
+          "fdc_id": null,
+          "basis_grams": null,
+          "requested_grams": null,
+          "scale_factor": null
+        },
+        {
+          "sequence": 2,
+          "revision": 1,
+          "stage": "extraction",
+          "event": "completed",
+          "item_id": null,
+          "reason_code": null,
+          "fdc_id": null,
+          "basis_grams": null,
+          "requested_grams": null,
+          "scale_factor": null
+        },
+        {
+          "sequence": 3,
+          "revision": 1,
+          "stage": "nutrition",
+          "event": "started",
+          "item_id": "nsvRslpauK2h4aJWnNNvXUD6IhtnaKR-z8hf8Sl6z1w",
+          "reason_code": null,
+          "fdc_id": null,
+          "basis_grams": null,
+          "requested_grams": null,
+          "scale_factor": null
+        },
+        {
+          "sequence": 4,
+          "revision": 1,
+          "stage": "nutrition",
+          "event": "needs_clarification",
+          "item_id": "nsvRslpauK2h4aJWnNNvXUD6IhtnaKR-z8hf8Sl6z1w",
+          "reason_code": "ambiguous_portion",
+          "fdc_id": 2707713,
+          "basis_grams": "100",
+          "requested_grams": null,
+          "scale_factor": null
+        },
+        {
+          "sequence": 5,
+          "revision": 1,
+          "stage": "nutrition",
+          "event": "started",
+          "item_id": "bf9DBkkiqpT7JGQ6ebJuMZKoKOg_XOCvSrgFEMbawbs",
+          "reason_code": null,
+          "fdc_id": null,
+          "basis_grams": null,
+          "requested_grams": null,
+          "scale_factor": null
+        },
+        {
+          "sequence": 6,
+          "revision": 1,
+          "stage": "nutrition",
+          "event": "needs_clarification",
+          "item_id": "bf9DBkkiqpT7JGQ6ebJuMZKoKOg_XOCvSrgFEMbawbs",
+          "reason_code": "missing_quantity",
+          "fdc_id": 168878,
+          "basis_grams": "100",
+          "requested_grams": null,
+          "scale_factor": null
+        }
+      ],
+      "usage": {
+        "turns": 0,
+        "steps": 3,
+        "tool_calls": 5,
+        "http_attempts": 1
+      },
+      "error": null
+    },
+    {
+      "schema_version": "1.0",
+      "session_id": "sZhTk_OhNlDZLWL0pSzFMDUxdjAoTQf9rf4_44zd5I4",
+      "revision": 2,
+      "status": "awaiting_clarification",
+      "created_at": 1793442834.4858773,
+      "expires_at": 1793444634.4858773,
+      "extraction": {
+        "schema_version": "1.0",
+        "status": "needs_clarification",
+        "foods": [
+          {
+            "name": "roti",
+            "quantity": 2.0,
+            "quantity_text": "2",
+            "unit": "piece",
+            "preparation": null,
+            "source_text": "2 rotis",
+            "issues": []
+          },
+          {
+            "name": "white rice",
+            "quantity": null,
+            "quantity_text": null,
+            "unit": null,
+            "preparation": "cooked",
+            "source_text": "cooked white rice",
+            "issues": [
+              "missing_quantity",
+              "missing_unit"
+            ]
+          }
+        ],
+        "questions": [
+          "Please specify a positive quantity and serving unit for 'cooked white rice'."
+        ]
+      },
+      "nutrition": {
+        "schema_version": "1.0",
+        "status": "partial",
+        "items": [
+          {
+            "item_index": 0,
+            "food": {
+              "name": "roti",
+              "quantity": 2.0,
+              "quantity_text": "2",
+              "unit": "piece",
+              "preparation": null,
+              "source_text": "2 rotis",
+              "issues": []
+            },
+            "status": "complete",
+            "candidates": [
+              {
+                "fdc_id": 2707713,
+                "description": "Bread, chappatti or roti",
+                "data_type": "Survey (FNDDS)"
+              }
+            ],
+            "search_scope": "Explicit user-selected food ID; compatibility checked",
+            "record": {
+              "provenance": {
+                "provider": "usda_snapshot",
+                "fdc_id": 2707713,
+                "description": "Bread, chappatti or roti",
+                "data_type": "Survey (FNDDS)",
+                "source_url": "https://fdc.nal.usda.gov/food-details/2707713/nutrients",
+                "retrieved_at": "2026-10-31T09:29:54.430152+00:00",
+                "publication_date": "10/31/2024",
+                "snapshot_sha256": "c3fde77650f6b10f4fa2f568a800464b34808cacb7bef239e40ea38a7c768937"
+              },
+              "basis_grams": "100",
+              "basis_description": "USDA nutrient amounts per 100 g edible food",
+              "nutrients": {
+                "calories": "299",
+                "protein": "7.85",
+                "carbs": "46.1",
+                "fats": "9.20",
+                "fiber": "9.70"
+              },
+              "nutrient_evidence": {
+                "calories": {
+                  "nutrient_id": 1008,
+                  "source_unit": "kcal",
+                  "source_amount": "299",
+                  "note": "Atwater specific > general > conventional kcal > kJ"
+                },
+                "protein": {
+                  "nutrient_id": 1003,
+                  "source_unit": "g",
+                  "source_amount": "7.85",
+                  "note": null
+                },
+                "carbs": {
+                  "nutrient_id": 1005,
+                  "source_unit": "g",
+                  "source_amount": "46.1",
+                  "note": null
+                },
+                "fats": {
+                  "nutrient_id": 1004,
+                  "source_unit": "g",
+                  "source_amount": "9.20",
+                  "note": null
+                },
+                "fiber": {
+                  "nutrient_id": 1079,
+                  "source_unit": "g",
+                  "source_amount": "9.70",
+                  "note": null
+                }
+              },
+              "portions": [
+                {
+                  "portion_id": "299426",
+                  "amount": "1",
+                  "unit": null,
+                  "gram_weight": "1",
+                  "description": "1 surface inch",
+                  "qualifiers": []
+                },
+                {
+                  "portion_id": "299424",
+                  "amount": "1",
+                  "unit": "piece",
+                  "gram_weight": "52",
+                  "description": "1 large chappatti or roti (8\")",
+                  "qualifiers": [
+                    "large"
+                  ]
+                },
+                {
+                  "portion_id": "299423",
+                  "amount": "1",
+                  "unit": "piece",
+                  "gram_weight": "40",
+                  "description": "1 medium chappatti or roti (7\")",
+                  "qualifiers": [
+                    "medium"
+                  ]
+                },
+                {
+                  "portion_id": "299422",
+                  "amount": "1",
+                  "unit": "piece",
+                  "gram_weight": "27",
+                  "description": "1 small chappatti or roti (6\")",
+                  "qualifiers": [
+                    "small"
+                  ]
+                }
+              ],
+              "issues": [
+                "invalid_portion_amount_or_weight"
+              ]
+            },
+            "portion": {
+              "requested_grams": "54.0",
+              "method": "usda_portion",
+              "evidence": "USDA FDC 2707713, portion 299422: 1 piece = 27 g; requested quantity multiplied by gramWeight / amount.",
+              "portion": {
+                "portion_id": "299422",
+                "amount": "1",
+                "unit": "piece",
+                "gram_weight": "27",
+                "description": "1 small chappatti or roti (6\")",
+                "qualifiers": [
+                  "small"
+                ]
+              }
+            },
+            "scale_factor": "0.54",
+            "nutrition": {
+              "calories": "161.4600",
+              "protein": "4.2390",
+              "carbs": "24.8940",
+              "fats": "4.9680",
+              "fiber": "5.2380"
+            },
+            "issues": [
+              {
+                "code": "source_data_notes",
+                "message": "invalid_portion_amount_or_weight"
+              }
+            ],
+            "questions": []
+          },
+          {
+            "item_index": 1,
+            "food": {
+              "name": "white rice",
+              "quantity": null,
+              "quantity_text": null,
+              "unit": null,
+              "preparation": "cooked",
+              "source_text": "cooked white rice",
+              "issues": [
+                "missing_quantity",
+                "missing_unit"
+              ]
+            },
+            "status": "needs_clarification",
+            "candidates": [
+              {
+                "fdc_id": 168878,
+                "description": "Rice, white, long-grain, regular, enriched, cooked",
+                "data_type": "SR Legacy"
+              }
+            ],
+            "search_scope": "offline USDA snapshot: 10 records; not the complete USDA catalog",
+            "record": {
+              "provenance": {
+                "provider": "usda_snapshot",
+                "fdc_id": 168878,
+                "description": "Rice, white, long-grain, regular, enriched, cooked",
+                "data_type": "SR Legacy",
+                "source_url": "https://fdc.nal.usda.gov/food-details/168878/nutrients",
+                "retrieved_at": "2026-10-31T09:29:54.430152+00:00",
+                "publication_date": "4/1/2019",
+                "snapshot_sha256": "c3fde77650f6b10f4fa2f568a800464b34808cacb7bef239e40ea38a7c768937"
+              },
+              "basis_grams": "100",
+              "basis_description": "USDA nutrient amounts per 100 g edible food",
+              "nutrients": {
+                "calories": "130.00000000",
+                "protein": "2.69000000",
+                "carbs": "28.17000000",
+                "fats": "0.28000000",
+                "fiber": "0.40000000"
+              },
+              "nutrient_evidence": {
+                "calories": {
+                  "nutrient_id": 1008,
+                  "source_unit": "kcal",
+                  "source_amount": "130.00000000",
+                  "note": "Atwater specific > general > conventional kcal > kJ"
+                },
+                "protein": {
+                  "nutrient_id": 1003,
+                  "source_unit": "g",
+                  "source_amount": "2.69000000",
+                  "note": null
+                },
+                "carbs": {
+                  "nutrient_id": 1005,
+                  "source_unit": "g",
+                  "source_amount": "28.17000000",
+                  "note": null
+                },
+                "fats": {
+                  "nutrient_id": 1004,
+                  "source_unit": "g",
+                  "source_amount": "0.28000000",
+                  "note": null
+                },
+                "fiber": {
+                  "nutrient_id": 1079,
+                  "source_unit": "g",
+                  "source_amount": "0.40000000",
+                  "note": null
+                }
+              },
+              "portions": [
+                {
+                  "portion_id": "83928",
+                  "amount": "1.00000000",
+                  "unit": "cup",
+                  "gram_weight": "158.00000000",
+                  "description": "cup",
+                  "qualifiers": []
+                }
+              ],
+              "issues": []
+            },
+            "portion": null,
+            "scale_factor": null,
+            "nutrition": {
+              "calories": null,
+              "protein": null,
+              "carbs": null,
+              "fats": null,
+              "fiber": null
+            },
+            "issues": [
+              {
+                "code": "missing_quantity",
+                "message": "Supply total edible grams or choose a compatible database portion, including size/form where required."
+              }
+            ],
+            "questions": [
+              "Item 1 (cooked white rice): Supply total edible grams or choose a compatible database portion, including size/form where required."
+            ]
+          }
+        ],
+        "complete_totals": {
+          "calories": null,
+          "protein": null,
+          "carbs": null,
+          "fats": null,
+          "fiber": null
+        },
+        "known_subtotals": {
+          "calories": "161.4600",
+          "protein": "4.2390",
+          "carbs": "24.8940",
+          "fats": "4.9680",
+          "fiber": "5.2380"
+        },
+        "coverage": {
+          "calories": {
+            "known_items": 1,
+            "total_items": 2,
+            "complete": false
+          },
+          "protein": {
+            "known_items": 1,
+            "total_items": 2,
+            "complete": false
+          },
+          "carbs": {
+            "known_items": 1,
+            "total_items": 2,
+            "complete": false
+          },
+          "fats": {
+            "known_items": 1,
+            "total_items": 2,
+            "complete": false
+          },
+          "fiber": {
+            "known_items": 1,
+            "total_items": 2,
+            "complete": false
+          }
+        },
+        "total_items": 2,
+        "resolved_items": 1,
+        "questions": [
+          "Item 1 (cooked white rice): Supply total edible grams or choose a compatible database portion, including size/form where required."
+        ],
+        "note": "Coverage counts food items, not food weight. Database reference values do not establish a homemade recipe's composition."
+      },
+      "questions": [
+        {
+          "question_id": "_O9JPVpqBaEZnureiEtNhU6oFVi-numrD0iaTh0yc5Q",
+          "item_id": "bf9DBkkiqpT7JGQ6ebJuMZKoKOg_XOCvSrgFEMbawbs",
+          "item_index": 1,
+          "reason": "missing_quantity",
+          "allowed_actions": [
+            "leave_unresolved",
+            "refine_food",
+            "quantity",
+            "measured_grams"
+          ],
+          "candidates": [
+            {
+              "fdc_id": 168878,
+              "description": "Rice, white, long-grain, regular, enriched, cooked",
+              "data_type": "SR Legacy"
+            }
+          ],
+          "portions": []
+        }
+      ],
+      "evidence": [
+        {
+          "item_id": "nsvRslpauK2h4aJWnNNvXUD6IhtnaKR-z8hf8Sl6z1w",
+          "revision": 2,
+          "request_id": "actual_demo_0",
+          "action": {
+            "kind": "select_portion",
+            "portion_id": "299422"
+          }
+        }
+      ],
+      "trace": [
+        {
+          "sequence": 1,
+          "revision": 1,
+          "stage": "extraction",
+          "event": "started",
+          "item_id": null,
+          "reason_code": null,
+          "fdc_id": null,
+          "basis_grams": null,
+          "requested_grams": null,
+          "scale_factor": null
+        },
+        {
+          "sequence": 2,
+          "revision": 1,
+          "stage": "extraction",
+          "event": "completed",
+          "item_id": null,
+          "reason_code": null,
+          "fdc_id": null,
+          "basis_grams": null,
+          "requested_grams": null,
+          "scale_factor": null
+        },
+        {
+          "sequence": 3,
+          "revision": 1,
+          "stage": "nutrition",
+          "event": "started",
+          "item_id": "nsvRslpauK2h4aJWnNNvXUD6IhtnaKR-z8hf8Sl6z1w",
+          "reason_code": null,
+          "fdc_id": null,
+          "basis_grams": null,
+          "requested_grams": null,
+          "scale_factor": null
+        },
+        {
+          "sequence": 4,
+          "revision": 1,
+          "stage": "nutrition",
+          "event": "needs_clarification",
+          "item_id": "nsvRslpauK2h4aJWnNNvXUD6IhtnaKR-z8hf8Sl6z1w",
+          "reason_code": "ambiguous_portion",
+          "fdc_id": 2707713,
+          "basis_grams": "100",
+          "requested_grams": null,
+          "scale_factor": null
+        },
+        {
+          "sequence": 5,
+          "revision": 1,
+          "stage": "nutrition",
+          "event": "started",
+          "item_id": "bf9DBkkiqpT7JGQ6ebJuMZKoKOg_XOCvSrgFEMbawbs",
+          "reason_code": null,
+          "fdc_id": null,
+          "basis_grams": null,
+          "requested_grams": null,
+          "scale_factor": null
+        },
+        {
+          "sequence": 6,
+          "revision": 1,
+          "stage": "nutrition",
+          "event": "needs_clarification",
+          "item_id": "bf9DBkkiqpT7JGQ6ebJuMZKoKOg_XOCvSrgFEMbawbs",
+          "reason_code": "missing_quantity",
+          "fdc_id": 168878,
+          "basis_grams": "100",
+          "requested_grams": null,
+          "scale_factor": null
+        },
+        {
+          "sequence": 7,
+          "revision": 2,
+          "stage": "clarification",
+          "event": "applied",
+          "item_id": "nsvRslpauK2h4aJWnNNvXUD6IhtnaKR-z8hf8Sl6z1w",
+          "reason_code": null,
+          "fdc_id": null,
+          "basis_grams": null,
+          "requested_grams": null,
+          "scale_factor": null
+        },
+        {
+          "sequence": 8,
+          "revision": 2,
+          "stage": "nutrition",
+          "event": "started",
+          "item_id": "nsvRslpauK2h4aJWnNNvXUD6IhtnaKR-z8hf8Sl6z1w",
+          "reason_code": null,
+          "fdc_id": null,
+          "basis_grams": null,
+          "requested_grams": null,
+          "scale_factor": null
+        },
+        {
+          "sequence": 9,
+          "revision": 2,
+          "stage": "nutrition",
+          "event": "completed",
+          "item_id": "nsvRslpauK2h4aJWnNNvXUD6IhtnaKR-z8hf8Sl6z1w",
+          "reason_code": "source_data_notes",
+          "fdc_id": 2707713,
+          "basis_grams": "100",
+          "requested_grams": "54.0",
+          "scale_factor": "0.54"
+        },
+        {
+          "sequence": 10,
+          "revision": 2,
+          "stage": "nutrition",
+          "event": "reused",
+          "item_id": "bf9DBkkiqpT7JGQ6ebJuMZKoKOg_XOCvSrgFEMbawbs",
+          "reason_code": null,
+          "fdc_id": null,
+          "basis_grams": null,
+          "requested_grams": null,
+          "scale_factor": null
+        }
+      ],
+      "usage": {
+        "turns": 1,
+        "steps": 4,
+        "tool_calls": 5,
+        "http_attempts": 1
+      },
+      "error": null
+    },
+    {
+      "schema_version": "1.0",
+      "session_id": "sZhTk_OhNlDZLWL0pSzFMDUxdjAoTQf9rf4_44zd5I4",
+      "revision": 3,
+      "status": "completed",
+      "created_at": 1793442834.4858773,
+      "expires_at": 1793444634.4858773,
+      "extraction": {
+        "schema_version": "1.0",
+        "status": "needs_clarification",
+        "foods": [
+          {
+            "name": "roti",
+            "quantity": 2.0,
+            "quantity_text": "2",
+            "unit": "piece",
+            "preparation": null,
+            "source_text": "2 rotis",
+            "issues": []
+          },
+          {
+            "name": "white rice",
+            "quantity": null,
+            "quantity_text": null,
+            "unit": null,
+            "preparation": "cooked",
+            "source_text": "cooked white rice",
+            "issues": [
+              "missing_quantity",
+              "missing_unit"
+            ]
+          }
+        ],
+        "questions": [
+          "Please specify a positive quantity and serving unit for 'cooked white rice'."
+        ]
+      },
+      "nutrition": {
+        "schema_version": "1.0",
+        "status": "complete",
+        "items": [
+          {
+            "item_index": 0,
+            "food": {
+              "name": "roti",
+              "quantity": 2.0,
+              "quantity_text": "2",
+              "unit": "piece",
+              "preparation": null,
+              "source_text": "2 rotis",
+              "issues": []
+            },
+            "status": "complete",
+            "candidates": [
+              {
+                "fdc_id": 2707713,
+                "description": "Bread, chappatti or roti",
+                "data_type": "Survey (FNDDS)"
+              }
+            ],
+            "search_scope": "Explicit user-selected food ID; compatibility checked",
+            "record": {
+              "provenance": {
+                "provider": "usda_snapshot",
+                "fdc_id": 2707713,
+                "description": "Bread, chappatti or roti",
+                "data_type": "Survey (FNDDS)",
+                "source_url": "https://fdc.nal.usda.gov/food-details/2707713/nutrients",
+                "retrieved_at": "2026-10-31T09:29:54.430152+00:00",
+                "publication_date": "10/31/2024",
+                "snapshot_sha256": "c3fde77650f6b10f4fa2f568a800464b34808cacb7bef239e40ea38a7c768937"
+              },
+              "basis_grams": "100",
+              "basis_description": "USDA nutrient amounts per 100 g edible food",
+              "nutrients": {
+                "calories": "299",
+                "protein": "7.85",
+                "carbs": "46.1",
+                "fats": "9.20",
+                "fiber": "9.70"
+              },
+              "nutrient_evidence": {
+                "calories": {
+                  "nutrient_id": 1008,
+                  "source_unit": "kcal",
+                  "source_amount": "299",
+                  "note": "Atwater specific > general > conventional kcal > kJ"
+                },
+                "protein": {
+                  "nutrient_id": 1003,
+                  "source_unit": "g",
+                  "source_amount": "7.85",
+                  "note": null
+                },
+                "carbs": {
+                  "nutrient_id": 1005,
+                  "source_unit": "g",
+                  "source_amount": "46.1",
+                  "note": null
+                },
+                "fats": {
+                  "nutrient_id": 1004,
+                  "source_unit": "g",
+                  "source_amount": "9.20",
+                  "note": null
+                },
+                "fiber": {
+                  "nutrient_id": 1079,
+                  "source_unit": "g",
+                  "source_amount": "9.70",
+                  "note": null
+                }
+              },
+              "portions": [
+                {
+                  "portion_id": "299426",
+                  "amount": "1",
+                  "unit": null,
+                  "gram_weight": "1",
+                  "description": "1 surface inch",
+                  "qualifiers": []
+                },
+                {
+                  "portion_id": "299424",
+                  "amount": "1",
+                  "unit": "piece",
+                  "gram_weight": "52",
+                  "description": "1 large chappatti or roti (8\")",
+                  "qualifiers": [
+                    "large"
+                  ]
+                },
+                {
+                  "portion_id": "299423",
+                  "amount": "1",
+                  "unit": "piece",
+                  "gram_weight": "40",
+                  "description": "1 medium chappatti or roti (7\")",
+                  "qualifiers": [
+                    "medium"
+                  ]
+                },
+                {
+                  "portion_id": "299422",
+                  "amount": "1",
+                  "unit": "piece",
+                  "gram_weight": "27",
+                  "description": "1 small chappatti or roti (6\")",
+                  "qualifiers": [
+                    "small"
+                  ]
+                }
+              ],
+              "issues": [
+                "invalid_portion_amount_or_weight"
+              ]
+            },
+            "portion": {
+              "requested_grams": "54.0",
+              "method": "usda_portion",
+              "evidence": "USDA FDC 2707713, portion 299422: 1 piece = 27 g; requested quantity multiplied by gramWeight / amount.",
+              "portion": {
+                "portion_id": "299422",
+                "amount": "1",
+                "unit": "piece",
+                "gram_weight": "27",
+                "description": "1 small chappatti or roti (6\")",
+                "qualifiers": [
+                  "small"
+                ]
+              }
+            },
+            "scale_factor": "0.54",
+            "nutrition": {
+              "calories": "161.4600",
+              "protein": "4.2390",
+              "carbs": "24.8940",
+              "fats": "4.9680",
+              "fiber": "5.2380"
+            },
+            "issues": [
+              {
+                "code": "source_data_notes",
+                "message": "invalid_portion_amount_or_weight"
+              }
+            ],
+            "questions": []
+          },
+          {
+            "item_index": 1,
+            "food": {
+              "name": "white rice",
+              "quantity": null,
+              "quantity_text": null,
+              "unit": null,
+              "preparation": "cooked",
+              "source_text": "cooked white rice",
+              "issues": [
+                "missing_quantity",
+                "missing_unit"
+              ]
+            },
+            "status": "complete",
+            "candidates": [
+              {
+                "fdc_id": 168878,
+                "description": "Rice, white, long-grain, regular, enriched, cooked",
+                "data_type": "SR Legacy"
+              }
+            ],
+            "search_scope": "Explicit user-selected food ID; compatibility checked",
+            "record": {
+              "provenance": {
+                "provider": "usda_snapshot",
+                "fdc_id": 168878,
+                "description": "Rice, white, long-grain, regular, enriched, cooked",
+                "data_type": "SR Legacy",
+                "source_url": "https://fdc.nal.usda.gov/food-details/168878/nutrients",
+                "retrieved_at": "2026-10-31T09:29:54.430152+00:00",
+                "publication_date": "4/1/2019",
+                "snapshot_sha256": "c3fde77650f6b10f4fa2f568a800464b34808cacb7bef239e40ea38a7c768937"
+              },
+              "basis_grams": "100",
+              "basis_description": "USDA nutrient amounts per 100 g edible food",
+              "nutrients": {
+                "calories": "130.00000000",
+                "protein": "2.69000000",
+                "carbs": "28.17000000",
+                "fats": "0.28000000",
+                "fiber": "0.40000000"
+              },
+              "nutrient_evidence": {
+                "calories": {
+                  "nutrient_id": 1008,
+                  "source_unit": "kcal",
+                  "source_amount": "130.00000000",
+                  "note": "Atwater specific > general > conventional kcal > kJ"
+                },
+                "protein": {
+                  "nutrient_id": 1003,
+                  "source_unit": "g",
+                  "source_amount": "2.69000000",
+                  "note": null
+                },
+                "carbs": {
+                  "nutrient_id": 1005,
+                  "source_unit": "g",
+                  "source_amount": "28.17000000",
+                  "note": null
+                },
+                "fats": {
+                  "nutrient_id": 1004,
+                  "source_unit": "g",
+                  "source_amount": "0.28000000",
+                  "note": null
+                },
+                "fiber": {
+                  "nutrient_id": 1079,
+                  "source_unit": "g",
+                  "source_amount": "0.40000000",
+                  "note": null
+                }
+              },
+              "portions": [
+                {
+                  "portion_id": "83928",
+                  "amount": "1.00000000",
+                  "unit": "cup",
+                  "gram_weight": "158.00000000",
+                  "description": "cup",
+                  "qualifiers": []
+                }
+              ],
+              "issues": []
+            },
+            "portion": {
+              "requested_grams": "150",
+              "method": "user_measured",
+              "evidence": "User-supplied total edible grams for this item; not a USDA weight measurement.",
+              "portion": null
+            },
+            "scale_factor": "1.5",
+            "nutrition": {
+              "calories": "195.0000",
+              "protein": "4.0350",
+              "carbs": "42.2550",
+              "fats": "0.4200",
+              "fiber": "0.6000"
+            },
+            "issues": [],
+            "questions": []
+          }
+        ],
+        "complete_totals": {
+          "calories": "356.4600",
+          "protein": "8.2740",
+          "carbs": "67.1490",
+          "fats": "5.3880",
+          "fiber": "5.8380"
+        },
+        "known_subtotals": {
+          "calories": "356.4600",
+          "protein": "8.2740",
+          "carbs": "67.1490",
+          "fats": "5.3880",
+          "fiber": "5.8380"
+        },
+        "coverage": {
+          "calories": {
+            "known_items": 2,
+            "total_items": 2,
+            "complete": true
+          },
+          "protein": {
+            "known_items": 2,
+            "total_items": 2,
+            "complete": true
+          },
+          "carbs": {
+            "known_items": 2,
+            "total_items": 2,
+            "complete": true
+          },
+          "fats": {
+            "known_items": 2,
+            "total_items": 2,
+            "complete": true
+          },
+          "fiber": {
+            "known_items": 2,
+            "total_items": 2,
+            "complete": true
+          }
+        },
+        "total_items": 2,
+        "resolved_items": 2,
+        "questions": [],
+        "note": "Coverage counts food items, not food weight. Database reference values do not establish a homemade recipe's composition."
+      },
+      "questions": [],
+      "evidence": [
+        {
+          "item_id": "nsvRslpauK2h4aJWnNNvXUD6IhtnaKR-z8hf8Sl6z1w",
+          "revision": 2,
+          "request_id": "actual_demo_0",
+          "action": {
+            "kind": "select_portion",
+            "portion_id": "299422"
+          }
+        },
+        {
+          "item_id": "bf9DBkkiqpT7JGQ6ebJuMZKoKOg_XOCvSrgFEMbawbs",
+          "revision": 3,
+          "request_id": "actual_demo_1",
+          "action": {
+            "kind": "measured_grams",
+            "grams": "150"
+          }
+        }
+      ],
+      "trace": [
+        {
+          "sequence": 1,
+          "revision": 1,
+          "stage": "extraction",
+          "event": "started",
+          "item_id": null,
+          "reason_code": null,
+          "fdc_id": null,
+          "basis_grams": null,
+          "requested_grams": null,
+          "scale_factor": null
+        },
+        {
+          "sequence": 2,
+          "revision": 1,
+          "stage": "extraction",
+          "event": "completed",
+          "item_id": null,
+          "reason_code": null,
+          "fdc_id": null,
+          "basis_grams": null,
+          "requested_grams": null,
+          "scale_factor": null
+        },
+        {
+          "sequence": 3,
+          "revision": 1,
+          "stage": "nutrition",
+          "event": "started",
+          "item_id": "nsvRslpauK2h4aJWnNNvXUD6IhtnaKR-z8hf8Sl6z1w",
+          "reason_code": null,
+          "fdc_id": null,
+          "basis_grams": null,
+          "requested_grams": null,
+          "scale_factor": null
+        },
+        {
+          "sequence": 4,
+          "revision": 1,
+          "stage": "nutrition",
+          "event": "needs_clarification",
+          "item_id": "nsvRslpauK2h4aJWnNNvXUD6IhtnaKR-z8hf8Sl6z1w",
+          "reason_code": "ambiguous_portion",
+          "fdc_id": 2707713,
+          "basis_grams": "100",
+          "requested_grams": null,
+          "scale_factor": null
+        },
+        {
+          "sequence": 5,
+          "revision": 1,
+          "stage": "nutrition",
+          "event": "started",
+          "item_id": "bf9DBkkiqpT7JGQ6ebJuMZKoKOg_XOCvSrgFEMbawbs",
+          "reason_code": null,
+          "fdc_id": null,
+          "basis_grams": null,
+          "requested_grams": null,
+          "scale_factor": null
+        },
+        {
+          "sequence": 6,
+          "revision": 1,
+          "stage": "nutrition",
+          "event": "needs_clarification",
+          "item_id": "bf9DBkkiqpT7JGQ6ebJuMZKoKOg_XOCvSrgFEMbawbs",
+          "reason_code": "missing_quantity",
+          "fdc_id": 168878,
+          "basis_grams": "100",
+          "requested_grams": null,
+          "scale_factor": null
+        },
+        {
+          "sequence": 7,
+          "revision": 2,
+          "stage": "clarification",
+          "event": "applied",
+          "item_id": "nsvRslpauK2h4aJWnNNvXUD6IhtnaKR-z8hf8Sl6z1w",
+          "reason_code": null,
+          "fdc_id": null,
+          "basis_grams": null,
+          "requested_grams": null,
+          "scale_factor": null
+        },
+        {
+          "sequence": 8,
+          "revision": 2,
+          "stage": "nutrition",
+          "event": "started",
+          "item_id": "nsvRslpauK2h4aJWnNNvXUD6IhtnaKR-z8hf8Sl6z1w",
+          "reason_code": null,
+          "fdc_id": null,
+          "basis_grams": null,
+          "requested_grams": null,
+          "scale_factor": null
+        },
+        {
+          "sequence": 9,
+          "revision": 2,
+          "stage": "nutrition",
+          "event": "completed",
+          "item_id": "nsvRslpauK2h4aJWnNNvXUD6IhtnaKR-z8hf8Sl6z1w",
+          "reason_code": "source_data_notes",
+          "fdc_id": 2707713,
+          "basis_grams": "100",
+          "requested_grams": "54.0",
+          "scale_factor": "0.54"
+        },
+        {
+          "sequence": 10,
+          "revision": 2,
+          "stage": "nutrition",
+          "event": "reused",
+          "item_id": "bf9DBkkiqpT7JGQ6ebJuMZKoKOg_XOCvSrgFEMbawbs",
+          "reason_code": null,
+          "fdc_id": null,
+          "basis_grams": null,
+          "requested_grams": null,
+          "scale_factor": null
+        },
+        {
+          "sequence": 11,
+          "revision": 3,
+          "stage": "clarification",
+          "event": "applied",
+          "item_id": "bf9DBkkiqpT7JGQ6ebJuMZKoKOg_XOCvSrgFEMbawbs",
+          "reason_code": null,
+          "fdc_id": null,
+          "basis_grams": null,
+          "requested_grams": null,
+          "scale_factor": null
+        },
+        {
+          "sequence": 12,
+          "revision": 3,
+          "stage": "nutrition",
+          "event": "reused",
+          "item_id": "nsvRslpauK2h4aJWnNNvXUD6IhtnaKR-z8hf8Sl6z1w",
+          "reason_code": null,
+          "fdc_id": null,
+          "basis_grams": null,
+          "requested_grams": null,
+          "scale_factor": null
+        },
+        {
+          "sequence": 13,
+          "revision": 3,
+          "stage": "nutrition",
+          "event": "started",
+          "item_id": "bf9DBkkiqpT7JGQ6ebJuMZKoKOg_XOCvSrgFEMbawbs",
+          "reason_code": null,
+          "fdc_id": null,
+          "basis_grams": null,
+          "requested_grams": null,
+          "scale_factor": null
+        },
+        {
+          "sequence": 14,
+          "revision": 3,
+          "stage": "nutrition",
+          "event": "completed",
+          "item_id": "bf9DBkkiqpT7JGQ6ebJuMZKoKOg_XOCvSrgFEMbawbs",
+          "reason_code": null,
+          "fdc_id": 168878,
+          "basis_grams": "100",
+          "requested_grams": "150",
+          "scale_factor": "1.5"
+        }
+      ],
+      "usage": {
+        "turns": 2,
+        "steps": 5,
+        "tool_calls": 5,
+        "http_attempts": 1
+      },
+      "error": null
+    }
+  ]
+}

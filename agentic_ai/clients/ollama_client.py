@@ -16,8 +16,9 @@ MAX_RESPONSE_BYTES = 1_048_576
 
 
 class OllamaClient:
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: Settings, *, attempt_observer=None):
         self.settings = settings
+        self.attempt_observer = attempt_observer
 
     def chat(self, messages: list[dict[str, str]], schema: dict) -> str:
         payload = {
@@ -31,6 +32,8 @@ class OllamaClient:
             headers={"Content-Type": "application/json", "Accept": "application/json"},
             method="POST",
         )
+        if self.attempt_observer is not None:
+            self.attempt_observer()
         try:
             with urlopen(request, timeout=self.settings.timeout_seconds) as response:
                 body = response.read(MAX_RESPONSE_BYTES + 1)

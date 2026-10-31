@@ -8,22 +8,22 @@ from agentic_ai.schemas.nutrition import PortionResolution
 from agentic_ai.tools.usda_normalization import portion_qualifiers
 
 
-def resolve_portion(food, record, selection=None):
+def resolve_portion(food, record, selection=None, *, exact_quantity=None):
     try:
         with localcontext() as context:
             context.prec = 40
-            return _resolve_portion(food, record, selection)
+            return _resolve_portion(food, record, selection, exact_quantity=exact_quantity)
     except DecimalException:
         raise NutritionInputError("The source portion exceeds supported numeric precision; no weight was guessed.") from None
 
 
-def _resolve_portion(food, record, selection=None):
+def _resolve_portion(food, record, selection=None, *, exact_quantity=None):
     """Return resolution, available compatible portions, and an issue code."""
     if selection and selection.measured_grams is not None:
         return PortionResolution(requested_grams=selection.measured_grams, method="user_measured", evidence="User-supplied total edible grams for this item; not a USDA weight measurement."), [], None
     if food.quantity is None:
         return None, record.portions, "missing_quantity"
-    quantity = Decimal(str(food.quantity))
+    quantity = Decimal(exact_quantity) if exact_quantity is not None else Decimal(str(food.quantity))
     if quantity <= 0 or not quantity.is_finite():
         return None, [], "invalid_quantity"
     if food.unit in {"g", "kg"}:
