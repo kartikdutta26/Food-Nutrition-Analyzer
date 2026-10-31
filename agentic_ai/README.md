@@ -1,9 +1,12 @@
 # NutriAI: Food Understanding Agent (Milestone 1)
 
-This package reads a meal description using **local Ollama + qwen3:4b-instruct**
+The Milestone 1 entry point reads a meal description using **local Ollama + qwen3:4b-instruct**
 and returns validated food items. It does not retrieve nutrition, estimate
 calories, recommend diets, analyze images, or write to the backend/database.
 All implementation and test files are contained in `agentic_ai/`.
+
+Milestone 2 adds a separate nutrition command; see [NUTRITION.md](NUTRITION.md).
+The extraction command, schemas, and tests documented here retain their behavior.
 
 ## Setup and demonstration (Windows PowerShell)
 

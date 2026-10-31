@@ -1,0 +1,143 @@
+[
+  {
+    "text": "I ate 100 g boiled eggs and 150 g cooked white rice.",
+    "extraction": {
+      "schema_version": "1.0",
+      "status": "success",
+      "foods": [
+        {
+          "name": "egg",
+          "quantity": 100.0,
+          "quantity_text": "100",
+          "unit": "g",
+          "preparation": "boiled",
+          "source_text": "100 g boiled eggs",
+          "issues": []
+        },
+        {
+          "name": "white rice",
+          "quantity": 150.0,
+          "quantity_text": "150",
+          "unit": "g",
+          "preparation": "cooked",
+          "source_text": "150 g cooked white rice",
+          "issues": []
+        }
+      ],
+      "questions": []
+    }
+  },
+  {
+    "text": "I ate 2 small rotis and 1/2 cup cooked white rice.",
+    "extraction": {
+      "schema_version": "1.0",
+      "status": "success",
+      "foods": [
+        {
+          "name": "roti",
+          "quantity": 2.0,
+          "quantity_text": "2",
+          "unit": "piece",
+          "preparation": null,
+          "source_text": "2 small rotis",
+          "issues": []
+        },
+        {
+          "name": "white rice",
+          "quantity": 0.5,
+          "quantity_text": "1/2",
+          "unit": "cup",
+          "preparation": "cooked",
+          "source_text": "1/2 cup cooked white rice",
+          "issues": []
+        }
+      ],
+      "questions": []
+    }
+  },
+  {
+    "text": "I ate 1 medium banana.",
+    "extraction": {
+      "schema_version": "1.0",
+      "status": "success",
+      "foods": [
+        {
+          "name": "banana",
+          "quantity": 1.0,
+          "quantity_text": "1",
+          "unit": "piece",
+          "preparation": null,
+          "source_text": "1 medium banana",
+          "issues": []
+        }
+      ],
+      "questions": []
+    }
+  },
+  {
+    "text": "I drank 250 ml whole milk.",
+    "extraction": {
+      "schema_version": "1.0",
+      "status": "success",
+      "foods": [
+        {
+          "name": "whole milk",
+          "quantity": 250.0,
+          "quantity_text": "250",
+          "unit": "ml",
+          "preparation": null,
+          "source_text": "250 ml whole milk",
+          "issues": []
+        }
+      ],
+      "questions": []
+    }
+  },
+  {
+    "text": "I ate 100 g bananas and one bowl of paneer curry.",
+    "extraction": {
+      "schema_version": "1.0",
+      "status": "success",
+      "foods": [
+        {
+          "name": "banana",
+          "quantity": 100.0,
+          "quantity_text": "100",
+          "unit": "g",
+          "preparation": null,
+          "source_text": "100 g bananas",
+          "issues": []
+        },
+        {
+          "name": "paneer curry",
+          "quantity": 1.0,
+          "quantity_text": "one",
+          "unit": "bowl",
+          "preparation": null,
+          "source_text": "one bowl of paneer curry",
+          "issues": []
+        }
+      ],
+      "questions": []
+    }
+  },
+  {
+    "text": "I ate 100 g apples.",
+    "extraction": {
+      "schema_version": "1.0",
+      "status": "success",
+      "foods": [
+        {
+          "name": "apple",
+          "quantity": 100.0,
+          "quantity_text": "100",
+          "unit": "g",
+          "preparation": null,
+          "source_text": "100 g apples",
+          "issues": []
+        }
+      ],
+      "questions": []
+    }
+  }
+]

@@ -1,0 +1,135 @@
+{
+  "scope": "All Milestone 2 changes are inside agentic_ai; root .gitignore change pre-existed and remains untouched.",
+  "snapshot_checksum_valid": true,
+  "authentic_snapshot_records": [
+    {
+      "fdc_id": 173424,
+      "description": "Egg, whole, cooked, hard-boiled",
+      "data_type": "SR Legacy",
+      "publication_date": "4/1/2019",
+      "source_url": "https://fdc.nal.usda.gov/food-details/173424/nutrients"
+    },
+    {
+      "fdc_id": 173423,
+      "description": "Egg, whole, cooked, fried",
+      "data_type": "SR Legacy",
+      "publication_date": "4/1/2019",
+      "source_url": "https://fdc.nal.usda.gov/food-details/173423/nutrients"
+    },
+    {
+      "fdc_id": 168878,
+      "description": "Rice, white, long-grain, regular, enriched, cooked",
+      "data_type": "SR Legacy",
+      "publication_date": "4/1/2019",
+      "source_url": "https://fdc.nal.usda.gov/food-details/168878/nutrients"
+    },
+    {
+      "fdc_id": 168877,
+      "description": "Rice, white, long-grain, regular, raw, enriched",
+      "data_type": "SR Legacy",
+      "publication_date": "4/1/2019",
+      "source_url": "https://fdc.nal.usda.gov/food-details/168877/nutrients"
+    },
+    {
+      "fdc_id": 173944,
+      "description": "Bananas, raw",
+      "data_type": "SR Legacy",
+      "publication_date": "4/1/2019",
+      "source_url": "https://fdc.nal.usda.gov/food-details/173944/nutrients"
+    },
+    {
+      "fdc_id": 171688,
+      "description": "Apples, raw, with skin (Includes foods for USDA's Food Distribution Program)",
+      "data_type": "SR Legacy",
+      "publication_date": "4/1/2019",
+      "source_url": "https://fdc.nal.usda.gov/food-details/171688/nutrients"
+    },
+    {
+      "fdc_id": 171689,
+      "description": "Apples, raw, without skin",
+      "data_type": "SR Legacy",
+      "publication_date": "4/1/2019",
+      "source_url": "https://fdc.nal.usda.gov/food-details/171689/nutrients"
+    },
+    {
+      "fdc_id": 171265,
+      "description": "Milk, whole, 3.25% milkfat, with added vitamin D",
+      "data_type": "SR Legacy",
+      "publication_date": "4/1/2019",
+      "source_url": "https://fdc.nal.usda.gov/food-details/171265/nutrients"
+    },
+    {
+      "fdc_id": 172217,
+      "description": "Milk, whole, 3.25% milkfat, without added vitamin A and vitamin D",
+      "data_type": "SR Legacy",
+      "publication_date": "4/1/2019",
+      "source_url": "https://fdc.nal.usda.gov/food-details/172217/nutrients"
+    },
+    {
+      "fdc_id": 2707713,
+      "description": "Bread, chappatti or roti",
+      "data_type": "Survey (FNDDS)",
+      "publication_date": "10/31/2024",
+      "source_url": "https://fdc.nal.usda.gov/food-details/2707713/nutrients"
+    }
+  ],
+  "tests": {
+    "tests": "277",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "20",
+    "time": "3.290"
+  },
+  "resolved_demo_items_independently_verified": [
+    {
+      "input": "I ate 100 g boiled eggs and 150 g cooked white rice.",
+      "fdc_id": 173424,
+      "grams": "100.0",
+      "basis_grams": "100",
+      "source_url": "https://fdc.nal.usda.gov/food-details/173424/nutrients",
+      "all_five_nutrients_match_raw_snapshot": true
+    },
+    {
+      "input": "I ate 100 g boiled eggs and 150 g cooked white rice.",
+      "fdc_id": 168878,
+      "grams": "150.0",
+      "basis_grams": "100",
+      "source_url": "https://fdc.nal.usda.gov/food-details/168878/nutrients",
+      "all_five_nutrients_match_raw_snapshot": true
+    },
+    {
+      "input": "I ate 2 small rotis and 1/2 cup cooked white rice.",
+      "fdc_id": 2707713,
+      "grams": "54.0",
+      "basis_grams": "100",
+      "source_url": "https://fdc.nal.usda.gov/food-details/2707713/nutrients",
+      "all_five_nutrients_match_raw_snapshot": true
+    },
+    {
+      "input": "I ate 2 small rotis and 1/2 cup cooked white rice.",
+      "fdc_id": 168878,
+      "grams": "79.0",
+      "basis_grams": "100",
+      "source_url": "https://fdc.nal.usda.gov/food-details/168878/nutrients",
+      "all_five_nutrients_match_raw_snapshot": true
+    },
+    {
+      "input": "I ate 1 medium banana.",
+      "fdc_id": 173944,
+      "grams": "118.0",
+      "basis_grams": "100",
+      "source_url": "https://fdc.nal.usda.gov/food-details/173944/nutrients",
+      "all_five_nutrients_match_raw_snapshot": true
+    },
+    {
+      "input": "I ate 100 g bananas and one bowl of paneer curry.",
+      "fdc_id": 173944,
+      "grams": "100.0",
+      "basis_grams": "100",
+      "source_url": "https://fdc.nal.usda.gov/food-details/173944/nutrients",
+      "all_five_nutrients_match_raw_snapshot": true
+    }
+  ],
+  "network_calls_this_recheck": 0,
+  "mocked_fixtures": "Synthetic HTTP envelopes/errors, backend contract payloads, altered copies of records, synthetic-two/synthetic-ml/synthetic-overflow portions are test-only and absent from foods.json."
+}
