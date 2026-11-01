@@ -43,23 +43,23 @@ export const fadeInUp = {
 export const popButtonVariants = {
   initial: { scale: 1, y: 0 },
   hover: {
-    scale: 1.05,
-    y: -3,
-    boxShadow: '0 20px 30px -10px rgba(13, 148, 136, 0.45), 0 10px 15px -5px rgba(13, 148, 136, 0.3)',
+    scale: 1.025,
+    y: -1.5,
+    boxShadow: '0 12px 22px -8px rgba(109, 53, 200, 0.3), 0 6px 12px -5px rgba(109, 53, 200, 0.18)',
     transition: {
       type: 'spring',
-      stiffness: 400,
-      damping: 17,
+      stiffness: 420,
+      damping: 28,
     },
   },
   tap: {
-    scale: 0.94,
-    y: 1,
-    boxShadow: '0 4px 10px -2px rgba(13, 148, 136, 0.3)',
+    scale: 0.975,
+    y: 0,
+    boxShadow: '0 3px 8px -2px rgba(109, 53, 200, 0.2)',
     transition: {
       type: 'spring',
-      stiffness: 500,
-      damping: 15,
+      stiffness: 520,
+      damping: 30,
     },
   },
 };

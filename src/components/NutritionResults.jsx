@@ -200,35 +200,35 @@ export default function NutritionResults({
             </div>
 
             {/* Nutrition Score Banner */}
-            <div className="p-4 rounded-2xl bg-gradient-to-r from-teal-50 via-emerald-50 to-teal-50 border border-teal-200/80 flex items-center justify-between flex-wrap gap-4">
+            <div className="nutrition-score-panel p-4 rounded-2xl flex items-center justify-between flex-wrap gap-4">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-teal-600 text-white flex items-center justify-center font-black text-xl shadow-md">
+                <div className="nutrition-score-badge w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xl">
                   {currentMeal.score}
                 </div>
                 <div>
                   <div className="flex items-center gap-1">
-                    <span className="text-sm font-black text-slate-900">Nutrition Score:</span>
-                    <span className="text-sm font-black text-teal-700">{currentMeal.score} / 10 ⭐</span>
+                    <span className="nutrition-score-label text-sm font-black">Nutrition Score:</span>
+                    <span className="nutrition-score-value text-sm font-black">{currentMeal.score} / 10 ⭐</span>
                   </div>
-                  <p className="text-xs text-slate-600">
+                  <p className="nutrition-score-description text-xs">
                     High Nutrient Density • Excellent bioavailable protein & minerals
                   </p>
                 </div>
               </div>
 
-              <div className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-extrabold">
+              <div className="nutrition-quality-pill px-3 py-1 rounded-full text-xs font-extrabold">
                 Optimal Quality Fuel
               </div>
             </div>
 
             {/* Quick Insight Section */}
-            <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200/80 flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+            <div className="quick-insight-panel p-4 rounded-2xl flex items-start gap-3">
+              <AlertCircle className="quick-insight-icon w-5 h-5 shrink-0 mt-0.5" />
               <div>
-                <span className="text-xs font-black text-amber-900 uppercase tracking-wide">
+                <span className="quick-insight-label text-xs font-black uppercase tracking-wide">
                   Quick AI Insight
                 </span>
-                <p className="text-sm font-medium text-amber-950 mt-0.5">
+                <p className="quick-insight-text text-sm font-medium mt-0.5">
                   {currentMeal.insight}
                 </p>
               </div>

@@ -31,6 +31,16 @@ export default function AuthPage({ onAuthenticate, onResetPassword, onExploreDem
   const [feedback, setFeedback] = useState(null);
   const reducedMotion = useReducedMotion();
   const isSignup = mode === 'signup';
+  const storyDescription = 'Snap your meals, get personalized nutrition insights, and build healthier habits with the power of AI.';
+  const storyWordVariants = {
+    hidden: { opacity: 0, y: 7, filter: 'blur(4px)' },
+    visible: {
+      opacity: 1,
+      y: 0,
+      filter: 'blur(0px)',
+      transition: { duration: 0.24, ease: [0.22, 1, 0.36, 1] },
+    },
+  };
 
   const changeMode = (nextMode) => {
     setMode(nextMode);
@@ -101,13 +111,6 @@ export default function AuthPage({ onAuthenticate, onResetPassword, onExploreDem
         <div className="auth-glow auth-glow--mint" />
         <div className="auth-glow auth-glow--peach" />
         <div className="auth-glow auth-glow--lilac" />
-        <div className="auth-ribbon auth-ribbon--back" />
-        <div className="auth-ribbon auth-ribbon--front" />
-        <div className="auth-orb auth-orb--one" />
-        <div className="auth-orb auth-orb--two" />
-        <div className="auth-orb auth-orb--three" />
-        <div className="auth-leaf auth-leaf--one"><Leaf size={52} strokeWidth={1} /></div>
-        <div className="auth-leaf auth-leaf--two"><Leaf size={36} strokeWidth={1} /></div>
         <div className="auth-grain" />
       </div>
 
@@ -118,58 +121,137 @@ export default function AuthPage({ onAuthenticate, onResetPassword, onExploreDem
         transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
         aria-label="NutriAI account access"
       >
-        <section className="auth-story" aria-labelledby="auth-headline">
-          <div className="auth-brand">
+        <section className="auth-story" aria-labelledby="auth-brand-heading">
+          <motion.div
+            className="auth-brand"
+            initial={reducedMotion ? false : { opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, delay: 0.12 }}
+          >
             <span className="auth-brand-mark"><Salad size={23} strokeWidth={1.8} /></span>
             <span className="auth-brand-word">Nutri<span>AI</span><small>INTELLIGENT NUTRITION</small></span>
-          </div>
+          </motion.div>
 
           <div className="auth-story-copy">
-            <span className="auth-eyebrow"><Sparkles size={14} /> A little more in tune</span>
-            <h1 id="auth-headline">Your food.<br />Your goals.<br /><span>A healthier you.</span></h1>
-            <p>Snap your meals, get personalized nutrition insights, and build healthier habits with the power of AI.</p>
-            <div className="auth-benefits" aria-label="NutriAI benefits">
-              <span><i><BrainCircuit size={16} /></i><span>AI-powered food insights</span></span>
-              <span><i><Goal size={16} /></i><span>Personalized nutrition goals</span></span>
-              <span><i><ChartNoAxesCombined size={16} /></i><span>Smart meal tracking</span></span>
-            </div>
+            <motion.span
+              className="auth-eyebrow"
+              initial={reducedMotion ? false : { opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.22 }}
+            >
+              <Sparkles size={14} /> A little more in tune
+            </motion.span>
+            <h1 className="auth-hero-brand" id="auth-brand-heading">
+              <span>Nutri</span><span>AI</span>
+            </h1>
+            <motion.h2
+              className="auth-story-headline"
+              id="auth-headline"
+              initial={reducedMotion ? false : { opacity: 0, y: 17, filter: 'blur(9px)' }}
+              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              transition={{ duration: 0.72, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            >
+              Your food.<br />Your goals.<br /><span>A healthier you.</span>
+            </motion.h2>
+            <motion.p
+              aria-label={storyDescription}
+              initial={reducedMotion ? false : 'hidden'}
+              animate="visible"
+              variants={{
+                hidden: {},
+                visible: {
+                  transition: { delayChildren: 0.48, staggerChildren: 0.026 },
+                },
+              }}
+            >
+              {storyDescription.split(' ').map((word, index, words) => (
+                <motion.span
+                  key={`${word}-${index}`}
+                  variants={storyWordVariants}
+                >
+                  {word}{index < words.length - 1 ? ' ' : ''}
+                </motion.span>
+              ))}
+            </motion.p>
+            <motion.div
+              className="auth-benefits"
+              aria-label="NutriAI benefits"
+              initial={reducedMotion ? false : 'hidden'}
+              animate="visible"
+              variants={{
+                hidden: {},
+                visible: {
+                  transition: { delayChildren: 1.14, staggerChildren: 0.1 },
+                },
+              }}
+            >
+              <motion.span variants={storyWordVariants}><i><BrainCircuit size={16} /></i><span>AI-powered food insights</span></motion.span>
+              <motion.span variants={storyWordVariants}><i><Goal size={16} /></i><span>Personalized nutrition goals</span></motion.span>
+              <motion.span variants={storyWordVariants}><i><ChartNoAxesCombined size={16} /></i><span>Smart meal tracking</span></motion.span>
+            </motion.div>
           </div>
 
           <div className="auth-food-art">
+            <img className="auth-food-bowl" src="/nutriai-3d-meal-bowl.png" alt="" />
             <span className="auth-food-orbit auth-food-orbit--one" aria-hidden="true" />
             <span className="auth-food-orbit auth-food-orbit--two" aria-hidden="true" />
             <span className="auth-food-sparkle auth-food-sparkle--one" aria-hidden="true"><Sparkles size={18} /></span>
             <span className="auth-food-sparkle auth-food-sparkle--two" aria-hidden="true"><Sparkles size={13} /></span>
-            <img src="/nutriai-3d-meal-bowl.png" alt="A vibrant bowl of greens, avocado, tomatoes, grains, and chickpeas" />
-            <div className="auth-food-caption">
+            <motion.div
+              className="auth-food-caption"
+              initial={reducedMotion ? false : { opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 1.68, ease: [0.22, 1, 0.36, 1] }}
+            >
               <span className="auth-food-caption-icon"><Leaf size={15} /></span>
               <span><strong>Real food. Smarter choices.</strong><small>Your nutrition, made personal</small></span>
               <span className="auth-food-spark"><Sparkles size={17} /></span>
-            </div>
+            </motion.div>
           </div>
-          <span className="auth-story-note"><ShieldCheck size={14} /> Your wellness journey, your way</span>
+          <motion.span
+            className="auth-story-note"
+            initial={reducedMotion ? false : { opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.4, delay: 1.8 }}
+          >
+            <ShieldCheck size={14} /> Your wellness journey, your way
+          </motion.span>
         </section>
 
         <section className="auth-form-panel" aria-label={isSignup ? 'Create your account' : 'Sign in to your account'}>
-          <div className="auth-mobile-brand">
-            <span className="auth-brand-mark"><Salad size={21} /></span>
-            <span className="auth-brand-word">Nutri<span>AI</span></span>
-          </div>
-          <div className="auth-form-heading">
+          <motion.div
+            className="auth-form-heading"
+            initial={reducedMotion ? false : { opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.42, delay: 0.18 }}
+          >
             <span className="auth-form-kicker">WELCOME TO YOUR WELLNESS SPACE</span>
             <h2>{isSignup ? 'Create your account' : 'Welcome back'}</h2>
             <p>{isSignup ? 'A healthier routine starts with a simple step.' : 'Your next healthy choice starts right here.'}</p>
-          </div>
+          </motion.div>
 
-          <div className="auth-tabs" role="tablist" aria-label="Choose login or sign up">
+          <motion.div
+            className="auth-tabs"
+            role="tablist"
+            aria-label="Choose login or sign up"
+            initial={reducedMotion ? false : { opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.38, delay: 0.28 }}
+          >
             <button type="button" role="tab" aria-selected={!isSignup} className={!isSignup ? 'is-selected' : ''} onClick={() => changeMode('login')}>Login</button>
             <button type="button" role="tab" aria-selected={isSignup} className={isSignup ? 'is-selected' : ''} onClick={() => changeMode('signup')}>Sign Up</button>
-          </div>
+          </motion.div>
 
-          <div className="auth-setup-note" role="status">
+          <motion.div
+            className="auth-setup-note"
+            role="status"
+            initial={reducedMotion ? false : { opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.38, delay: 0.34 }}
+          >
             <span className="auth-setup-dot" />
             {authConfigured ? 'Secure sign-in powered by Supabase.' : 'Add your Supabase project settings to enable accounts.'}
-          </div>
+          </motion.div>
 
           <AnimatePresence mode="wait" initial={false}>
             <motion.form
@@ -183,22 +265,37 @@ export default function AuthPage({ onAuthenticate, onResetPassword, onExploreDem
               noValidate
             >
               {isSignup && (
-                <label className="auth-field">
+                <motion.label
+                  className="auth-field"
+                  initial={reducedMotion ? false : { opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.03 }}
+                >
                   <span>Full name</span>
                   <span className="auth-input-wrap">
                     <UserRound size={17} aria-hidden="true" />
                     <input autoComplete="name" name="name" value={fullName} onChange={(event) => setFullName(event.target.value)} placeholder="How should we call you?" />
                   </span>
-                </label>
+                </motion.label>
               )}
-              <label className="auth-field">
+              <motion.label
+                className="auth-field"
+                initial={reducedMotion ? false : { opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: isSignup ? 0.08 : 0.03 }}
+              >
                 <span>Email address</span>
                 <span className="auth-input-wrap">
                   <Mail size={17} aria-hidden="true" />
                   <input autoComplete="email" name="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" />
                 </span>
-              </label>
-              <label className="auth-field">
+              </motion.label>
+              <motion.label
+                className="auth-field"
+                initial={reducedMotion ? false : { opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: isSignup ? 0.13 : 0.08 }}
+              >
                 <span>Password</span>
                 <span className="auth-input-wrap">
                   <LockKeyhole size={17} aria-hidden="true" />
@@ -208,22 +305,32 @@ export default function AuthPage({ onAuthenticate, onResetPassword, onExploreDem
                   </button>
                 </span>
                 {isSignup && <small className="auth-hint">8+ characters with uppercase, lowercase, and a number.</small>}
-              </label>
+              </motion.label>
               {isSignup && (
-                <label className="auth-field">
+                <motion.label
+                  className="auth-field"
+                  initial={reducedMotion ? false : { opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.18 }}
+                >
                   <span>Confirm password</span>
                   <span className="auth-input-wrap">
                     <LockKeyhole size={17} aria-hidden="true" />
                     <input autoComplete="new-password" name="confirm-password" type={showPassword ? 'text' : 'password'} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} placeholder="Enter your password again" />
                   </span>
-                </label>
+                </motion.label>
               )}
 
               {!isSignup && (
-                <div className="auth-forgot-row">
+                <motion.div
+                  className="auth-forgot-row"
+                  initial={reducedMotion ? false : { opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3, delay: 0.14 }}
+                >
                   <span>Forgot your password?</span>
                   <button type="button" onClick={handleForgotPassword} disabled={isSubmitting}>Reset it</button>
-                </div>
+                </motion.div>
               )}
 
               {feedback && (
@@ -232,16 +339,28 @@ export default function AuthPage({ onAuthenticate, onResetPassword, onExploreDem
                 </div>
               )}
 
-              <button className="auth-submit" type="submit" disabled={isSubmitting}>
+              <motion.button
+                className="auth-submit"
+                type="submit"
+                disabled={isSubmitting}
+                initial={reducedMotion ? false : { opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.32, delay: isSignup ? 0.24 : 0.19 }}
+              >
                 {isSubmitting ? <span className="auth-spinner" aria-hidden="true" /> : <>{isSignup ? 'Create account' : 'Login'} <ArrowRight size={17} /></>}
                 <span className="sr-only">{isSubmitting ? 'Please wait' : ''}</span>
-              </button>
+              </motion.button>
               <p className="auth-terms">A healthier routine starts with choices that work for you.</p>
             </motion.form>
           </AnimatePresence>
 
           {onExploreDemo && (
-            <div className="auth-demo-entry">
+            <motion.div
+              className="auth-demo-entry"
+              initial={reducedMotion ? false : { opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.56 }}
+            >
               <span className="auth-demo-divider"><span>or</span></span>
               <button type="button" className="auth-demo-button" onClick={onExploreDemo}>
                 <Sparkles size={16} />
@@ -249,10 +368,17 @@ export default function AuthPage({ onAuthenticate, onResetPassword, onExploreDem
                 <ArrowRight size={15} />
               </button>
               <p>Continue without an account. Demo uses sample data; changes are not saved.</p>
-            </div>
+            </motion.div>
           )}
 
-          <div className="auth-secure-note"><ShieldCheck size={15} /> Your password is never saved by NutriAI.</div>
+          <motion.div
+            className="auth-secure-note"
+            initial={reducedMotion ? false : { opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.4, delay: 0.68 }}
+          >
+            <ShieldCheck size={15} /> Your password is never saved by NutriAI.
+          </motion.div>
         </section>
       </motion.section>
       <p className="auth-footer">NOURISH YOURSELF, ONE GOOD CHOICE AT A TIME</p>

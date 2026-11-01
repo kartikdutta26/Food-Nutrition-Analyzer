@@ -109,24 +109,24 @@ export default function DailyDashboard({
         <div className="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-8 border border-teal-100 shadow-card-soft space-y-7">
           
           {/* Calorie Headline Callout */}
-          <div className="flex flex-wrap items-center justify-between gap-4 p-5 rounded-2xl bg-gradient-to-r from-teal-50 via-emerald-50 to-teal-50 border border-teal-200/80">
+          <div className="calorie-summary-card flex flex-wrap items-center justify-between gap-4 p-5 rounded-2xl border">
             <div>
-              <span className="text-xs font-extrabold uppercase tracking-wider text-teal-800">
+              <span className="calorie-summary-label text-xs font-extrabold uppercase tracking-wider">
                 Caloric Intake Today
               </span>
               <div className="flex items-baseline gap-2 mt-1">
-                <span className="text-4xl font-black font-display text-slate-900">
+                <span className="calorie-summary-total text-4xl font-black font-display">
                   {totalCalories.toLocaleString()}
                 </span>
-                <span className="text-lg font-bold text-slate-400">
+                <span className="calorie-summary-target text-lg font-bold">
                   / {targets.calories.toLocaleString()} kcal
                 </span>
               </div>
             </div>
 
             <div className="text-right">
-              <span className="text-xs font-bold text-slate-500 block">Remaining Budget</span>
-              <span className="text-2xl font-black text-teal-700">
+              <span className="calorie-summary-remaining-label text-xs font-bold block">Remaining Budget</span>
+              <span className="calorie-summary-remaining text-2xl font-black">
                 {Math.max(0, targets.calories - totalCalories)} <span className="text-xs font-normal">kcal</span>
               </span>
             </div>
@@ -240,8 +240,8 @@ export default function DailyDashboard({
           {/* Water Tracker */}
           <div className="bg-white rounded-3xl p-6 border border-teal-100 shadow-card-soft flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-cyan-50 text-cyan-600 flex items-center justify-center font-bold">
-                💧
+              <div className="hydration-icon-tile w-12 h-12 rounded-2xl flex items-center justify-center">
+                <Droplet className="w-5 h-5" />
               </div>
               <div>
                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Hydration Target</span>
@@ -251,7 +251,7 @@ export default function DailyDashboard({
                 <p className="text-[11px] text-teal-700 font-semibold">72% of daily target reached</p>
               </div>
             </div>
-            <div className="px-3 py-1 rounded-full bg-cyan-100 text-cyan-800 text-xs font-bold">
+            <div className="hydration-status-pill px-3 py-1 rounded-full text-xs font-bold">
               Optimal
             </div>
           </div>

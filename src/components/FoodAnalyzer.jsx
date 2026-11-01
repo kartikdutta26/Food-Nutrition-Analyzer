@@ -91,28 +91,28 @@ export default function FoodAnalyzer({ onAnalysisComplete }) {
   );
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
+    <div className="food-analyzer max-w-6xl mx-auto px-4 sm:px-6 py-10">
       
       {/* Header */}
       <div className="text-center max-w-2xl mx-auto mb-10">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-50 border border-teal-200 text-teal-800 text-xs font-bold uppercase tracking-wider mb-3">
+        <div className="food-analyzer-kicker inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-50 border border-teal-200 text-teal-800 text-xs font-bold uppercase tracking-wider mb-3">
           <Sparkles className="w-3.5 h-3.5 text-teal-600" />
           <span>Core Feature • Multimodal AI</span>
         </div>
-        <h2 className="text-3xl sm:text-4xl font-black font-display text-slate-900 tracking-tight">
+        <h2 className="food-analyzer-title text-3xl sm:text-4xl font-black font-display text-slate-900 tracking-tight">
           Analyze Your Meal
         </h2>
-        <p className="text-slate-600 mt-2 text-base">
+        <p className="food-analyzer-description text-slate-600 mt-2 text-base">
           Upload a picture of your food to get instant nutritional information, glycemic index, and AI coach insights.
         </p>
       </div>
 
       {/* 3 Entry Modes Navigation */}
       <div className="flex justify-center mb-8">
-        <div className="inline-flex p-1.5 rounded-2xl bg-slate-100/90 border border-slate-200 shadow-inner">
+        <div className="food-analyzer-mode-switch inline-flex p-1.5 rounded-2xl bg-slate-100/90 border border-slate-200 shadow-inner">
           <button
             onClick={() => { setActiveMode('upload'); setCameraActive(false); }}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 ${
+            className={`food-analyzer-mode-button flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 ${
               activeMode === 'upload'
                 ? 'bg-teal-600 text-white shadow-md'
                 : 'text-slate-600 hover:text-teal-700 hover:bg-white/60'
@@ -124,7 +124,7 @@ export default function FoodAnalyzer({ onAnalysisComplete }) {
 
           <button
             onClick={() => { setActiveMode('camera'); setCameraActive(true); }}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 ${
+            className={`food-analyzer-mode-button flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 ${
               activeMode === 'camera'
                 ? 'bg-teal-600 text-white shadow-md'
                 : 'text-slate-600 hover:text-teal-700 hover:bg-white/60'
@@ -136,7 +136,7 @@ export default function FoodAnalyzer({ onAnalysisComplete }) {
 
           <button
             onClick={() => { setActiveMode('manual'); setCameraActive(false); }}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 ${
+            className={`food-analyzer-mode-button flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 ${
               activeMode === 'manual'
                 ? 'bg-teal-600 text-white shadow-md'
                 : 'text-slate-600 hover:text-teal-700 hover:bg-white/60'
@@ -149,17 +149,17 @@ export default function FoodAnalyzer({ onAnalysisComplete }) {
       </div>
 
       {/* Main Analyzer Workspace Card */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div className="food-analyzer-workspace grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
         {/* Left Interactive Input Section */}
-        <div className="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-8 border border-teal-100 shadow-card-soft">
+        <div className="food-analyzer-panel food-analyzer-input-panel lg:col-span-7 bg-white rounded-3xl p-6 sm:p-8 border border-teal-100 shadow-card-soft">
           
           {/* MODE 1: Upload Image */}
           {activeMode === 'upload' && (
             <div className="space-y-6">
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="relative border-2 border-dashed border-teal-200 hover:border-teal-500 rounded-2xl p-8 sm:p-12 text-center bg-teal-50/25 hover:bg-teal-50/60 transition-all cursor-pointer group"
+                className="food-analyzer-dropzone relative border-2 border-dashed border-teal-200 hover:border-teal-500 rounded-2xl p-8 sm:p-12 text-center bg-teal-50/25 hover:bg-teal-50/60 transition-all cursor-pointer group"
               >
                 <input
                   ref={fileInputRef}
@@ -168,7 +168,7 @@ export default function FoodAnalyzer({ onAnalysisComplete }) {
                   onChange={handleFileUpload}
                   className="hidden"
                 />
-                <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-teal-100/70 text-teal-700 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <div className="food-analyzer-upload-icon w-16 h-16 mx-auto mb-4 rounded-2xl bg-teal-100/70 text-teal-700 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <UploadCloud className="w-8 h-8 stroke-[2]" />
                 </div>
                 <h4 className="font-bold text-slate-800 text-base mb-1">
@@ -187,7 +187,7 @@ export default function FoodAnalyzer({ onAnalysisComplete }) {
                   </span>
                   <span className="text-xs font-semibold text-teal-600">Click to preview</span>
                 </div>
-                <div className="grid grid-cols-3 sm:grid-cols-3 gap-2.5">
+                <div className="food-analyzer-meal-grid grid grid-cols-3 sm:grid-cols-3 gap-2.5">
                   {PRESET_MEALS.slice(0, 6).map((meal) => {
                     const isSelected = selectedMeal.id === meal.id && !customImage;
                     return (
@@ -197,7 +197,7 @@ export default function FoodAnalyzer({ onAnalysisComplete }) {
                           setSelectedMeal(meal);
                           setCustomImage(null);
                         }}
-                        className={`relative p-2 rounded-xl border text-left flex flex-col gap-1.5 transition-all ${
+                        className={`food-analyzer-meal-card relative p-2 rounded-xl border text-left flex flex-col gap-1.5 transition-all ${
                           isSelected
                             ? 'border-teal-600 bg-teal-50/80 ring-2 ring-teal-500/20 shadow-sm'
                             : 'border-slate-200 hover:border-teal-200 bg-white'
@@ -353,7 +353,7 @@ export default function FoodAnalyzer({ onAnalysisComplete }) {
         </div>
 
         {/* Right Preview & Action Column (Flow: Preview Image -> Analyze Button) */}
-        <div className="lg:col-span-5 bg-white rounded-3xl p-6 sm:p-8 border border-teal-100 shadow-card-soft space-y-6">
+        <div className="food-analyzer-panel food-analyzer-preview-panel lg:col-span-5 bg-white rounded-3xl p-6 sm:p-8 border border-teal-100 shadow-card-soft space-y-6">
           <div className="flex items-center justify-between border-b border-slate-100 pb-4">
             <div>
               <span className="text-[11px] font-bold text-teal-700 uppercase tracking-wider">Preview Window</span>
@@ -367,7 +367,7 @@ export default function FoodAnalyzer({ onAnalysisComplete }) {
           </div>
 
           {/* Interactive Image Preview with AI Scanning Beam */}
-          <div className="relative aspect-[4/3] rounded-2xl overflow-hidden border border-teal-200/80 shadow-md bg-slate-900 group">
+          <div className="food-analyzer-preview-frame relative aspect-[4/3] rounded-2xl overflow-hidden border border-teal-200/80 shadow-md bg-slate-900 group">
             <img
               src={customImage || selectedMeal.image}
               alt="Meal preview"
