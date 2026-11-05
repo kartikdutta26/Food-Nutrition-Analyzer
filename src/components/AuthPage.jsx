@@ -20,7 +20,7 @@ import './auth.css';
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const passwordRequirement = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
-export default function AuthPage({ onAuthenticate, onResetPassword, onExploreDemo, authConfigured }) {
+export default function AuthPage({ onAuthenticate, onResetPassword, onExploreDemo, onOpenAdvancedAuth, authConfigured }) {
   const [mode, setMode] = useState('login');
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -68,6 +68,11 @@ export default function AuthPage({ onAuthenticate, onResetPassword, onExploreDem
         email: email.trim(),
         password,
       });
+      if (mode === 'signup' && result?.type === 'success') {
+        setPassword('');
+        setConfirmPassword('');
+        setMode('login');
+      }
       if (result?.message) setFeedback({ type: result.type || 'error', message: result.message });
     } catch (error) {
       setFeedback({ type: 'error', message: error.message || 'Authentication could not be completed. Try again.' });
@@ -253,6 +258,12 @@ export default function AuthPage({ onAuthenticate, onResetPassword, onExploreDem
           )}
 
           <div className="auth-secure-note"><ShieldCheck size={15} /> Your password is never saved by NutriAI.</div>
+          {onOpenAdvancedAuth && (
+            <div className="auth-forgot-row mt-3">
+              <span>Need email verification or account recovery?</span>
+              <button type="button" onClick={onOpenAdvancedAuth}>Open account help</button>
+            </div>
+          )}
         </section>
       </motion.section>
       <p className="auth-footer">NOURISH YOURSELF, ONE GOOD CHOICE AT A TIME</p>

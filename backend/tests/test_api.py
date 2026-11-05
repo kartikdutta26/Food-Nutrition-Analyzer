@@ -617,6 +617,13 @@ def test_daily_nutrition_requires_valid_iso_date(authenticated_client):
 def test_profile_get_returns_unconfigured_targets_and_patch_updates_profile(authenticated_client, database):
     initial = authenticated_client.get("/api/profile")
     assert initial.status_code == 200
+    assert initial.json()["name"] is None
+    assert initial.json()["age"] is None
+    assert initial.json()["height_cm"] is None
+    assert initial.json()["weight_kg"] is None
+    assert initial.json()["activity_level"] is None
+    assert initial.json()["goal"] is None
+    assert initial.json()["water_liters"] is None
     assert initial.json()["dietary_preferences"] == []
     assert initial.json()["targets"] is None
     assert database["profiles"].documents == []
@@ -625,20 +632,37 @@ def test_profile_get_returns_unconfigured_targets_and_patch_updates_profile(auth
     updated = authenticated_client.patch(
         "/api/profile",
         json={
+            "name": "Kartik Dutta",
+            "age": 29,
+            "height_cm": 181,
+            "weight_kg": 78,
+            "activity_level": "Active",
+            "goal": "Gain Muscle",
+            "water_liters": 3,
             "dietary_preferences": ["Vegetarian", "vegetarian", "Dairy-free"],
             "targets": {"calories": 2100, "protein": 115, "carbs": 230, "fats": 70},
         },
     )
     assert updated.status_code == 200
+    assert updated.json()["name"] == "Kartik Dutta"
+    assert updated.json()["age"] == 29
+    assert updated.json()["height_cm"] == 181
+    assert updated.json()["weight_kg"] == 78
+    assert updated.json()["activity_level"] == "Active"
+    assert updated.json()["goal"] == "Gain Muscle"
+    assert updated.json()["water_liters"] == 3
     assert updated.json()["dietary_preferences"] == ["Vegetarian", "Dairy-free"]
     assert updated.json()["targets"]["protein"] == 115
     assert updated.json()["updated_at"] is not None
-    assert authenticated_client.get("/api/profile").json()["targets"]["calories"] == 2100
+    refreshed = authenticated_client.get("/api/profile").json()
+    assert refreshed["name"] == "Kartik Dutta"
+    assert refreshed["age"] == 29
+    assert refreshed["targets"]["calories"] == 2100
 
 
 def test_profile_rejects_empty_patch_and_invalid_targets(authenticated_client):
     empty = authenticated_client.patch("/api/profile", json={})
-    assert "'dietary_preferences' or 'targets'" in validation_errors(empty)[0]["msg"]
+    assert "at least one profile field" in validation_errors(empty)[0]["msg"]
 
     null_preferences = authenticated_client.patch(
         "/api/profile",
@@ -678,6 +702,22 @@ def test_profile_preferences_explain_invalid_items_and_unknown_fields(authentica
     assert "not supported" in validation_errors(extra_field)[0]["msg"]
 
 
+def test_profile_rejects_invalid_personal_fields(authenticated_client):
+    invalid_values = [
+        {"age": 0},
+        {"age": 121},
+        {"height_cm": 301},
+        {"weight_kg": 0},
+        {"activity_level": "Very active"},
+        {"goal": "Lose 20 kg"},
+        {"water_liters": 21},
+        {"user_id": "22222222-2222-4222-8222-222222222222"},
+    ]
+    for payload in invalid_values:
+        response = authenticated_client.patch("/api/profile", json=payload)
+        assert response.status_code == 422, payload
+
+
 def test_profile_can_be_created_by_patch_without_prior_get(authenticated_client, database):
     response = authenticated_client.patch(
         "/api/profile",
@@ -696,6 +736,29 @@ def test_profile_get_requires_write_access_to_create_user_defaults(authenticated
 
     assert response.status_code == 503
     assert database["profiles"].documents == []
+
+
+def test_existing_user_profiles_without_new_personal_fields_remain_usable(authenticated_client, database):
+    existing_profile = {
+        "user_id": "11111111-1111-4111-8111-111111111111",
+        "dietary_preferences": ["Vegetarian"],
+        "targets": {"calories": 2000, "protein": 100, "carbs": 200, "fats": 60},
+        "updated_at": datetime(2026, 10, 1, tzinfo=UTC),
+    }
+    database["user_profiles"].documents.append(existing_profile)
+
+    initial = authenticated_client.get("/api/profile")
+    updated = authenticated_client.patch("/api/profile", json={"name": "Account Owner"})
+
+    assert initial.status_code == 200
+    assert initial.json()["name"] is None
+    assert initial.json()["dietary_preferences"] == ["Vegetarian"]
+    assert initial.json()["targets"]["calories"] == 2000
+    assert updated.status_code == 200
+    assert updated.json()["name"] == "Account Owner"
+    assert updated.json()["targets"]["calories"] == 2000
+    assert len(database["user_profiles"].documents) == 1
+    assert database["user_profiles"].documents[0]["user_id"] == existing_profile["user_id"]
 
 
 def test_profile_endpoints_leave_legacy_profile_unread_and_unchanged(authenticated_client, database):

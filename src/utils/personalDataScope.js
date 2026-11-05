@@ -29,6 +29,7 @@ export function createPersonalDataScope(initialUserId = null) {
 
 /** Clear every in-memory field that can contain or indicate user-owned data. */
 export function resetPersonalDataState(setters, { initialProfile, emptyTotals }) {
+  setters.setActiveMeal?.(null);
   setters.setTodayLog({ meals: [] });
   setters.setDailyTotals({ ...emptyTotals });
   setters.setDailyLoading(false);

@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence, useMotionValue, useReducedMotion, useScroll, useSpring, useTransform } from 'framer-motion';
+import { ShieldCheck } from 'lucide-react';
 import Navbar from './components/Navbar';
 import AuthPage from './components/AuthPage';
 import HeroLanding from './components/HeroLanding';
@@ -9,8 +10,68 @@ import DailyDashboard from './components/DailyDashboard';
 import ProfileSettings from './components/ProfileSettings';
 import AuthScreen from './components/AuthScreen';
 import Footer from './components/Footer';
-import { PRESET_MEALS, INITIAL_USER_PROFILE, INITIAL_TODAY_LOG } from './data/mockMeals';
-import { authClient, authConfigured } from './auth/authClient';
+import { EMPTY_USER_PROFILE, profileFromApi, profileUpdateToApi } from './utils/profile';
+import { createRequestSequence } from './utils/requestSequence';
+import { createPersonalDataScope, resetPersonalDataState } from './utils/personalDataScope';
+import {
+  cleanAuthRedirectUrl,
+  cleanEmailConfirmationTokenFromUrl,
+  createIdempotentCallbackProcessor,
+  friendlyAuthError,
+  getEmailConfirmationCallback,
+  getAuthRedirectInfo,
+  getRegistrationSuccessMessage,
+  hasSupabaseAuthCallbackPayload,
+  loginWithEmail,
+  registerWithEmail,
+  resendSignupVerification,
+  sendPasswordReset,
+  signOutLocally,
+  subscribeToVerifiedAuthState,
+  updatePassword,
+  verifyEmailWithTokenHash,
+} from './lib/authFlows';
+import {
+  analyzeFood,
+  createMeal,
+  deleteMeal,
+  fetchDailyNutrition,
+  fetchMealsForDate,
+  fetchProfile,
+  updateProfile,
+} from './api/client';
+
+const EMPTY_NUTRITION_TOTALS = {
+  calories: 0,
+  protein: 0,
+  carbs: 0,
+  fats: 0,
+  fiber: 0,
+};
+
+const AUTH_REQUIRED_TABS = new Set(['daily', 'profile']);
+const PERSONAL_DATA_API_ENABLED = true;
+
+function toDashboardMeal(meal) {
+  const consumedAt = new Date(meal.consumed_at);
+
+  return {
+    id: meal.id,
+    name: meal.name,
+    slot: meal.meal_slot,
+    time: Number.isNaN(consumedAt.getTime())
+      ? 'Logged'
+      : consumedAt.toLocaleTimeString([], { timeZone: 'UTC', hour: '2-digit', minute: '2-digit' }),
+    calories: meal.nutrition.calories,
+    protein: meal.nutrition.protein,
+    carbs: meal.nutrition.carbs,
+    fats: meal.nutrition.fats,
+    fiber: meal.nutrition.fiber,
+    dataSource: meal.data_source,
+    fdcId: meal.fdc_id,
+    serving: meal.serving,
+  };
+}
 
 function AmbientBackground() {
   const reducedMotion = useReducedMotion();
@@ -90,70 +151,72 @@ function AmbientBackground() {
   );
 }
 
+function PersonalDataPending({ section, onExploreFood }) {
+  return (
+    <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
+      <section aria-labelledby="personal-data-pending-title" className="rounded-3xl border border-white/80 bg-white/80 p-7 text-center shadow-card-soft backdrop-blur-xl sm:p-10">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-white bg-teal-50 text-teal-800 shadow-sm">
+          <ShieldCheck className="h-6 w-6" aria-hidden="true" />
+        </div>
+        <span className="inline-flex rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[.15em] text-teal-800">Account connected</span>
+        <h1 id="personal-data-pending-title" className="mt-4 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">Your {section} is waiting for secure sync</h1>
+        <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-slate-600">
+          NutriAI is finishing account-specific access for saved profiles and meal history. Your personal nutrition data stays hidden until that connection is ready.
+        </p>
+        <button type="button" onClick={onExploreFood} className="mt-6 inline-flex items-center justify-center rounded-full border border-white/80 bg-gradient-to-r from-orange-200 to-teal-200 px-5 py-3 text-sm font-extrabold text-teal-950 shadow-sm">
+          Explore food analysis
+        </button>
+      </section>
+    </div>
+  );
+}
+
 export default function App() {
-  const [authSession, setAuthSession] = useState(null);
+  const [initialAuthRedirectInfo] = useState(() => getAuthRedirectInfo(
+    globalThis.window?.location?.href || '',
+  ));
+  const [initialEmailConfirmationCallback] = useState(() => getEmailConfirmationCallback(
+    globalThis.window?.location?.href || '',
+  ));
+  const [initialHasAuthCallbackPayload] = useState(() => hasSupabaseAuthCallbackPayload(
+    globalThis.window?.location?.href || '',
+  ));
+  const [activeTab, setActiveTab] = useState(() => (
+    initialAuthRedirectInfo.flow || initialAuthRedirectInfo.error ? 'auth' : 'home'
+  ));
+  const [authUser, setAuthUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [authConfigured, setAuthConfigured] = useState(false);
+  const [authMode, setAuthMode] = useState(() => (
+    initialAuthRedirectInfo.flow === 'recovery'
+      ? 'reset'
+      : initialEmailConfirmationCallback
+        ? 'verify'
+        : 'login'
+  ));
+  const [authReturnTab, setAuthReturnTab] = useState('home');
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const [recoveryReady, setRecoveryReady] = useState(false);
+  const [authRedirectFlow, setAuthRedirectFlow] = useState(() => (
+    initialAuthRedirectInfo.error ? null : initialAuthRedirectInfo.flow
+  ));
+  const [authRedirectNotice, setAuthRedirectNotice] = useState('');
+  const [authRedirectError, setAuthRedirectError] = useState(initialAuthRedirectInfo.error || '');
+  const pendingProtectedTab = useRef(null);
+  const supabaseClientRef = useRef(null);
+  const initialAuthSessionHandled = useRef(false);
+  const passwordRecoveryHandled = useRef(false);
+  const emailConfirmationToken = useRef(initialEmailConfirmationCallback);
+  const emailConfirmationProcessor = useRef(null);
+  if (!emailConfirmationProcessor.current) {
+    emailConfirmationProcessor.current = createIdempotentCallbackProcessor();
+  }
+
   const [demoMode, setDemoMode] = useState(false);
-  const [authLoading, setAuthLoading] = useState(Boolean(authClient?.auth));
-  const [pathname, setPathname] = useState(window.location.pathname);
-
-  useEffect(() => {
-    const handlePopState = () => setPathname(window.location.pathname);
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
-
-  useEffect(() => {
-    if (!authClient?.auth) {
-      return undefined;
-    }
-
-    let active = true;
-    const { data: { subscription } } = authClient.auth.onAuthStateChange((_event, session) => {
-      if (active) setAuthSession(session);
-    });
-
-    authClient.auth.getSession().then(({ data, error }) => {
-      if (!active) return;
-      if (error) {
-        console.error('Unable to restore the authentication session:', error.message);
-        setAuthSession(null);
-      } else {
-        setAuthSession(data.session);
-      }
-      setAuthLoading(false);
-    }).catch((error) => {
-      if (!active) return;
-      console.error('Unable to restore the authentication session:', error);
-      setAuthSession(null);
-      setAuthLoading(false);
-    });
-
-    return () => {
-      active = false;
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  const hasAppAccess = Boolean(authSession?.user) || (import.meta.env.DEV && demoMode);
-
-  useEffect(() => {
-    if (authLoading) return;
-    const targetPath = hasAppAccess ? '/' : '/login';
-    if (pathname !== targetPath) {
-      window.history.replaceState({}, '', targetPath);
-    }
-  }, [authLoading, hasAppAccess, pathname]);
-
-  // Navigation: 'home' | 'analyzer' | 'results' | 'daily' | 'profile'
-  const [activeTab, setActiveTab] = useState('home');
   
   // App Global State
   const [activeMeal, setActiveMeal] = useState(null);
-  const [userProfile, setUserProfile] = useState({
-    ...INITIAL_USER_PROFILE,
-    dietary_preferences: [],
-    targets: null,
-  });
+  const [userProfile, setUserProfile] = useState({ ...EMPTY_USER_PROFILE });
   const [todayLog, setTodayLog] = useState({ meals: [] });
   const [dailyTotals, setDailyTotals] = useState(EMPTY_NUTRITION_TOTALS);
   const [dailyLoading, setDailyLoading] = useState(false);
@@ -168,7 +231,14 @@ export default function App() {
   const [profileActionError, setProfileActionError] = useState('');
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
+  const [dailyRequestSequence] = useState(createRequestSequence);
+  const [profileRequestSequence] = useState(createRequestSequence);
+  const personalDataScopeRef = useRef(null);
+  if (!personalDataScopeRef.current) personalDataScopeRef.current = createPersonalDataScope();
+  const expiredAuthUserId = useRef(null);
   const reducedMotion = useReducedMotion();
+  const dailyDate = new Date().toISOString().slice(0, 10);
+  const hasAppAccess = Boolean(authUser) || (import.meta.env.DEV && demoMode);
 
   const showToast = (msg) => {
     setToastMessage(msg);
@@ -189,6 +259,7 @@ export default function App() {
       setIsSavingMeal,
       setPendingMealId,
       setIsLoggingAnalysisMeal,
+      setActiveMeal,
       setUserProfile,
       setProfileLoading,
       setProfileLoaded,
@@ -196,7 +267,7 @@ export default function App() {
       setProfileActionError,
       setIsSavingProfile,
     }, {
-      initialProfile: INITIAL_USER_PROFILE,
+      initialProfile: EMPTY_USER_PROFILE,
       emptyTotals: EMPTY_NUTRITION_TOTALS,
     });
     setToastMessage(null);
@@ -302,12 +373,14 @@ export default function App() {
     import('./lib/supabase.js').then(({ supabase }) => {
       if (!active) return;
       supabaseClientRef.current = supabase;
+      setAuthConfigured(true);
       unsubscribe = subscribeToVerifiedAuthState(supabase, {
         onUser: (user) => {
           const nextUserId = user?.id ?? null;
           if (personalDataScopeRef.current.setUserId(nextUserId)) {
             expiredAuthUserId.current = null;
             clearPersonalState();
+            setProfileLoading(Boolean(user));
           }
           setAuthUser(user);
         },
@@ -389,6 +462,7 @@ export default function App() {
       });
     }).catch(() => {
       if (!active) return;
+      setAuthConfigured(false);
       setAuthLoading(false);
       setAuthRedirectFlow(null);
       setAuthMode(redirectInfo.flow === 'recovery' ? 'forgot' : 'login');
@@ -499,11 +573,7 @@ export default function App() {
         throw new Error('The backend returned an unexpected profile response.');
       }
       if (!isCurrentRequest()) return;
-      setUserProfile((previous) => ({
-        ...previous,
-        dietary_preferences: profile.dietary_preferences,
-        targets: profile.targets,
-      }));
+      setUserProfile(profileFromApi(profile));
       setProfileLoaded(true);
     } catch (error) {
       handleProtectedAuthFailure(error, snapshot);
@@ -520,12 +590,8 @@ export default function App() {
   }, [activeTab, authUser, loadDaily]);
 
   useEffect(() => {
-    if (
-      PERSONAL_DATA_API_ENABLED
-      && authUser
-      && (activeTab === 'daily' || activeTab === 'profile' || activeTab === 'results')
-    ) void loadProfile();
-  }, [activeTab, authUser, loadProfile]);
+    if (PERSONAL_DATA_API_ENABLED && authUser) void loadProfile();
+  }, [authUser, loadProfile]);
 
   // Scroll to top on tab change
   useEffect(() => {
@@ -670,35 +736,15 @@ export default function App() {
     const snapshot = personalDataScopeRef.current.capture();
     if (authUser.id !== snapshot.userId || !personalDataScopeRef.current.isCurrent(snapshot)) return false;
     setProfileActionError('');
-    setUserProfile((previous) => ({
-      ...previous,
-      name: updatedData.name,
-      age: updatedData.age,
-      height: updatedData.height,
-      weight: updatedData.weight,
-      activityLevel: updatedData.activityLevel,
-      goal: updatedData.goal,
-      localWaterTarget: updatedData.localWaterTarget,
-    }));
     setIsSavingProfile(true);
     try {
-      const savedProfile = await updateProfile({
-        dietary_preferences: updatedData.dietary_preferences,
-        targets: {
-          calories: Number(updatedData.targets.calories),
-          protein: Number(updatedData.targets.protein),
-          carbs: Number(updatedData.targets.carbs),
-          fats: Number(updatedData.targets.fats),
-        },
-      }, { expectedUserId: snapshot.userId });
+      const savedProfile = await updateProfile(profileUpdateToApi(updatedData), {
+        expectedUserId: snapshot.userId,
+      });
       if (!personalDataScopeRef.current.isCurrent(snapshot)) return false;
-      setUserProfile((previous) => ({
-        ...previous,
-        dietary_preferences: savedProfile.dietary_preferences,
-        targets: savedProfile.targets,
-      }));
+      setUserProfile(profileFromApi(savedProfile));
       setProfileLoaded(true);
-      showToast('Dietary preferences and four nutrition targets saved. Other profile fields remain session-only.');
+      showToast('Your profile and nutrition preferences have been saved.');
       return true;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to save your profile.';
@@ -779,49 +825,57 @@ export default function App() {
     showToast('Your password has been updated.');
   };
 
-  const handleAuthenticate = async ({ mode, fullName, email, password }) => {
-    if (!authClient?.auth) {
+  const handleAuthPageAuthenticate = async ({ mode, fullName, email, password }) => {
+    try {
+      const client = getSupabaseClient();
+      if (mode === 'signup') {
+        const result = await registerWithEmail(
+          client,
+          { name: fullName, email, password },
+          getAuthRedirectOptions(),
+        );
+        if (result.authenticated) completeAuthentication();
+        return {
+          type: 'success',
+          message: getRegistrationSuccessMessage(email, result),
+        };
+      }
+
+      await loginWithEmail(client, { email, password });
+      completeAuthentication();
+      return {};
+    } catch (error) {
       return {
         type: 'error',
-        message: 'Authentication is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env.local, then restart the dev server.',
+        message: friendlyAuthError(error, mode === 'signup' ? 'signup' : 'login'),
       };
     }
-
-    const result = mode === 'signup'
-      ? await authClient.auth.signUp({ email, password, options: { data: { full_name: fullName } } })
-      : await authClient.auth.signInWithPassword({ email, password });
-
-    if (result.error) return { type: 'error', message: result.error.message };
-    if (mode === 'signup' && !result.data.session) {
-      return { type: 'success', message: 'Your account was created. Check your email to confirm it, then log in.' };
-    }
-    return {};
   };
 
-  const handlePasswordReset = async (email) => {
-    if (!authClient?.auth) {
+  const handleAuthPagePasswordReset = async (email) => {
+    try {
+      await sendPasswordReset(getSupabaseClient(), email, getAuthRedirectOptions());
       return {
-        type: 'error',
-        message: 'Password reset is unavailable until an authentication provider is configured.',
+        type: 'success',
+        message: 'If an account exists for this address, a password reset email is on its way.',
       };
+    } catch (error) {
+      return { type: 'error', message: friendlyAuthError(error, 'forgot') };
     }
-
-    const { error } = await authClient.auth.resetPasswordForEmail(email);
-    if (error) return { type: 'error', message: error.message };
-    return { type: 'success', message: 'If an account exists for this address, a password reset email is on its way.' };
   };
 
   const handleSignOut = async () => {
-    setDemoMode(false);
-    if (!authClient?.auth) return;
-    const { error } = await authClient.auth.signOut();
-    if (error) showToast(`Could not sign out: ${error.message}`);
+    if (demoMode) {
+      setDemoMode(false);
+      setActiveTab('home');
+      return;
+    }
+    await handleLogout();
   };
 
   const handleExploreDemo = () => {
-    window.history.replaceState({}, '', '/');
-    setPathname('/');
     setDemoMode(true);
+    setActiveTab('home');
   };
 
   if (authLoading) {
@@ -833,13 +887,17 @@ export default function App() {
     );
   }
 
-  if (!hasAppAccess) {
+  if (!hasAppAccess && activeTab !== 'auth') {
     return (
       <AuthPage
-        onAuthenticate={handleAuthenticate}
-        onResetPassword={handlePasswordReset}
+        onAuthenticate={handleAuthPageAuthenticate}
+        onResetPassword={handleAuthPagePasswordReset}
         onExploreDemo={import.meta.env.DEV ? handleExploreDemo : undefined}
         authConfigured={authConfigured}
+        onOpenAdvancedAuth={() => {
+          setAuthMode('login');
+          setActiveTab('auth');
+        }}
       />
     );
   }
@@ -866,9 +924,12 @@ export default function App() {
       {/* Main Navigation */}
       <Navbar 
         activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
+        setActiveTab={navigateToTab}
         onSignOut={handleSignOut}
         demoMode={demoMode}
+        isSigningOut={isSigningOut}
+        authUser={authUser}
+        profileName={profileLoaded ? userProfile.name : ''}
       />
 
       {/* Dynamic Content Views */}
@@ -885,9 +946,9 @@ export default function App() {
               transition={{ duration: 0.3 }}
             >
               <HeroLanding 
-                onNavigateToAnalyzer={() => setActiveTab('analyzer')} 
-                onNavigateToDaily={() => setActiveTab('daily')}
-                setActiveTab={setActiveTab}
+                onNavigateToAnalyzer={() => navigateToTab('analyzer')}
+                onNavigateToDaily={() => navigateToTab('daily')}
+                setActiveTab={navigateToTab}
               />
             </motion.div>
           )}
@@ -1043,7 +1104,5 @@ export default function App() {
       </div>
 
       </div>
-
-    </div>
   );
 }

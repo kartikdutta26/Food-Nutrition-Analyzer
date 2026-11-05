@@ -160,7 +160,16 @@ test('personal-data methods attach the current Supabase bearer token and use bac
   });
 
   await client.fetchProfile({ expectedUserId: 'user-1' });
-  await client.updateProfile({ dietary_preferences: ['vegetarian'] }, { expectedUserId: 'user-1' });
+  await client.updateProfile({
+    name: 'Kartik Dutta',
+    age: 29,
+    height_cm: 181,
+    weight_kg: 78,
+    activity_level: 'Active',
+    goal: 'Gain Muscle',
+    water_liters: 3,
+    dietary_preferences: ['vegetarian'],
+  }, { expectedUserId: 'user-1' });
   await client.createMeal({ preset_id: 'oatmeal-bowl', meal_slot: 'Breakfast' }, { expectedUserId: 'user-1' });
   await client.fetchMealsForDate('2026-10-26', { expectedUserId: 'user-1' });
   await client.deleteMeal('abc123abc123abc123abc123', { expectedUserId: 'user-1' });
@@ -177,7 +186,16 @@ test('personal-data methods attach the current Supabase bearer token and use bac
   for (const { options } of requests) {
     assert.equal(options.headers.Authorization, 'Bearer test-access-token');
   }
-  assert.deepEqual(JSON.parse(requests[1].options.body), { dietary_preferences: ['vegetarian'] });
+  assert.deepEqual(JSON.parse(requests[1].options.body), {
+    name: 'Kartik Dutta',
+    age: 29,
+    height_cm: 181,
+    weight_kg: 78,
+    activity_level: 'Active',
+    goal: 'Gain Muscle',
+    water_liters: 3,
+    dietary_preferences: ['vegetarian'],
+  });
   assert.deepEqual(JSON.parse(requests[2].options.body), {
     preset_id: 'oatmeal-bowl',
     meal_slot: 'Breakfast',

@@ -9,6 +9,13 @@ from app.schemas.nutrition import ProfileResponse, ProfileUpdateRequest
 
 def _profile_response(profile: dict) -> ProfileResponse:
     return ProfileResponse(
+        name=profile.get("name"),
+        age=profile.get("age"),
+        height_cm=profile.get("height_cm"),
+        weight_kg=profile.get("weight_kg"),
+        activity_level=profile.get("activity_level"),
+        goal=profile.get("goal"),
+        water_liters=profile.get("water_liters"),
         dietary_preferences=profile.get("dietary_preferences", []),
         targets=profile.get("targets"),
         updated_at=profile.get("updated_at"),
@@ -24,7 +31,15 @@ def _get_or_create_profile(database: Database, user_id: str) -> dict:
             {
                 "$setOnInsert": {
                     "user_id": user_id,
+                    "name": None,
+                    "age": None,
+                    "height_cm": None,
+                    "weight_kg": None,
+                    "activity_level": None,
+                    "goal": None,
+                    "water_liters": None,
                     "dietary_preferences": [],
+                    "targets": None,
                     "updated_at": None,
                 },
             },
@@ -64,9 +79,18 @@ def update_profile(
         changes["dietary_preferences"] = unique_preferences
 
     changes["updated_at"] = datetime.now(UTC)
-    insert_defaults = {"user_id": user_id}
-    if "dietary_preferences" not in changes:
-        insert_defaults["dietary_preferences"] = []
+    insert_defaults = {
+        "user_id": user_id,
+        "name": None,
+        "age": None,
+        "height_cm": None,
+        "weight_kg": None,
+        "activity_level": None,
+        "goal": None,
+        "water_liters": None,
+        "dietary_preferences": [],
+        "targets": None,
+    }
 
     update = {
         "$set": changes,

@@ -34,5 +34,19 @@ export function getSupabaseConfig(env = {}) {
     throw new Error('VITE_SUPABASE_URL must be a valid HTTP(S) URL.');
   }
 
-  return { url, publishableKey };
+  const configuredPath = parsedUrl.pathname.replace(/\/+$/, '');
+  if (
+    (configuredPath && configuredPath !== '/rest/v1')
+    || parsedUrl.username
+    || parsedUrl.password
+    || parsedUrl.search
+    || parsedUrl.hash
+  ) {
+    throw new Error('VITE_SUPABASE_URL must be the project URL, not a nested service endpoint.');
+  }
+
+  // Supabase clients need the project root to build /auth/v1, /rest/v1, and
+  // storage URLs. Accept the REST endpoint copied from the API settings, but
+  // normalize it before any Auth or Data client is created.
+  return { url: parsedUrl.origin, publishableKey };
 }

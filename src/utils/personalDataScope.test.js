@@ -26,6 +26,7 @@ test('logout invalidates in-flight reads and clears all user-specific values and
   const scope = createPersonalDataScope('user-a');
   const inFlight = scope.capture();
   const state = {
+    activeMeal: { name: 'private analysis result' },
     todayLog: { meals: [{ id: 'private-meal' }] },
     dailyTotals: { calories: 900 },
     dailyLoading: true,
@@ -34,7 +35,17 @@ test('logout invalidates in-flight reads and clears all user-specific values and
     isSavingMeal: true,
     pendingMealId: 'private-meal',
     isLoggingAnalysisMeal: true,
-    userProfile: { dietary_preferences: ['private preference'], targets: { calories: 1 } },
+    userProfile: {
+      name: 'Account A',
+      age: 29,
+      height: 181,
+      weight: 78,
+      activityLevel: 'Active',
+      goal: 'Gain Muscle',
+      waterTarget: 3,
+      dietary_preferences: ['private preference'],
+      targets: { calories: 2500, protein: 150, carbs: 280, fats: 75 },
+    },
     profileLoading: true,
     profileLoaded: true,
     profileError: 'old profile error',
@@ -48,12 +59,13 @@ test('logout invalidates in-flight reads and clears all user-specific values and
 
   scope.invalidate();
   resetPersonalDataState(setters, {
-    initialProfile: { name: 'Guest', age: 0 },
+    initialProfile: { name: '', age: '', height: '', weight: '', activityLevel: '', goal: '', waterTarget: '' },
     emptyTotals: { calories: 0, protein: 0, carbs: 0, fats: 0, fiber: 0 },
   });
 
   assert.equal(scope.isCurrent(inFlight), false);
   assert.deepEqual(state, {
+    activeMeal: null,
     todayLog: { meals: [] },
     dailyTotals: { calories: 0, protein: 0, carbs: 0, fats: 0, fiber: 0 },
     dailyLoading: false,
@@ -62,7 +74,10 @@ test('logout invalidates in-flight reads and clears all user-specific values and
     isSavingMeal: false,
     pendingMealId: null,
     isLoggingAnalysisMeal: false,
-    userProfile: { name: 'Guest', age: 0, dietary_preferences: [], targets: null },
+    userProfile: {
+      name: '', age: '', height: '', weight: '', activityLevel: '', goal: '', waterTarget: '',
+      dietary_preferences: [], targets: null,
+    },
     profileLoading: false,
     profileLoaded: false,
     profileError: '',

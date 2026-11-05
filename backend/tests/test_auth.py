@@ -521,47 +521,61 @@ def test_profiles_are_isolated_between_verified_users(client, database, token_fa
     first_update = client.patch(
         "/api/profile",
         headers=first_headers,
-        json={"dietary_preferences": ["Vegetarian"]},
+        json={
+            "name": "Account A",
+            "age": 29,
+            "height_cm": 181,
+            "weight_kg": 78,
+            "activity_level": "Active",
+            "goal": "Gain Muscle",
+            "water_liters": 3,
+            "dietary_preferences": ["Vegetarian"],
+        },
     )
     second_initial = client.get("/api/profile", headers=second_headers)
     second_update = client.patch(
         "/api/profile",
         headers=second_headers,
-        json={"dietary_preferences": ["Gluten-free"]},
+        json={
+            "name": "Account B",
+            "age": 35,
+            "height_cm": 165,
+            "weight_kg": 61,
+            "activity_level": "Light",
+            "goal": "Maintain Weight",
+            "dietary_preferences": ["Gluten-free"],
+        },
     )
     first_read_back = client.get("/api/profile", headers=first_headers)
-
-    assert first_update.status_code == 200
-    assert second_initial.json()["dietary_preferences"] == []
-    assert second_update.status_code == 200
-    assert first_read_back.json()["dietary_preferences"] == ["Vegetarian"]
-    assert {document["user_id"] for document in database["user_profiles"].documents} == {
-        TEST_USER_ID,
-        OTHER_USER_ID,
-    }
-
-
-def test_profiles_are_isolated_between_verified_users(client, database, token_factory):
-    first_headers = bearer(token_factory.issue(TEST_USER_ID))
-    second_headers = bearer(token_factory.issue(OTHER_USER_ID))
-
-    first_update = client.patch(
+    second_read_back = client.get("/api/profile", headers=second_headers)
+    spoofed_get = client.get(
+        "/api/profile",
+        params={"user_id": OTHER_USER_ID},
+        headers=first_headers,
+    )
+    spoofed_update = client.patch(
         "/api/profile",
         headers=first_headers,
-        json={"dietary_preferences": ["Vegetarian"]},
+        json={"user_id": OTHER_USER_ID, "name": "Overwrite Account B"},
     )
-    second_initial = client.get("/api/profile", headers=second_headers)
-    second_update = client.patch(
-        "/api/profile",
-        headers=second_headers,
-        json={"dietary_preferences": ["Gluten-free"]},
-    )
-    first_read_back = client.get("/api/profile", headers=first_headers)
 
     assert first_update.status_code == 200
     assert second_initial.json()["dietary_preferences"] == []
+    assert second_initial.json()["name"] is None
     assert second_update.status_code == 200
+    assert second_read_back.json()["name"] == "Account B"
+    assert second_read_back.json()["height_cm"] == 165
     assert first_read_back.json()["dietary_preferences"] == ["Vegetarian"]
+    assert first_read_back.json()["name"] == "Account A"
+    assert first_read_back.json()["age"] == 29
+    assert first_read_back.json()["height_cm"] == 181
+    assert first_read_back.json()["weight_kg"] == 78
+    assert first_read_back.json()["activity_level"] == "Active"
+    assert first_read_back.json()["goal"] == "Gain Muscle"
+    assert first_read_back.json()["water_liters"] == 3
+    assert spoofed_get.status_code == 200
+    assert spoofed_get.json()["name"] == "Account A"
+    assert spoofed_update.status_code == 422
     assert {document["user_id"] for document in database["user_profiles"].documents} == {
         TEST_USER_ID,
         OTHER_USER_ID,

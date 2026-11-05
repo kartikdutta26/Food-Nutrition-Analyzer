@@ -67,10 +67,19 @@ returning documents.
 ## MongoDB collections
 
 New records use separate `user_profiles` and `user_meals` collections. Profile
-reads create an empty account-specific profile when one does not exist. Meal
-creation assigns `user_id` in the server service. Listing, daily aggregation,
-and deletion always include the verified `user_id` in their MongoDB filters.
-Deleting another user's guessed meal ID returns the same `404` as a missing ID.
+reads create an empty account-specific profile when one does not exist. A
+profile stores `name`, `age`, `height_cm`, `weight_kg`, `activity_level`,
+`goal`, `water_liters`, `dietary_preferences`, and the existing `targets`
+subdocument for calories, protein, carbohydrates, and fats. The profile API
+currently exposes `GET` and `PATCH`; both derive the owner from the verified
+JWT and do not accept a caller-selected owner ID. Existing profile documents
+that predate these personal fields return empty values for them and retain
+their existing preferences and targets; no migration is needed.
+
+Meal creation assigns `user_id` in the server service. Listing, daily
+aggregation, and deletion always include the verified `user_id` in their
+MongoDB filters. Deleting another user's guessed meal ID returns the same `404`
+as a missing ID.
 
 Startup creates these indexes:
 

@@ -6,6 +6,7 @@ import {
   cleanEmailConfirmationTokenFromUrl,
   createIdempotentCallbackProcessor,
   EmailVerificationRequiredError,
+  friendlyAuthError,
   getAuthRedirectInfo,
   getEmailConfirmationCallback,
   getRegistrationSuccessMessage,
@@ -214,6 +215,19 @@ test('invalid and already-consumed callback responses are recognized without exp
   );
 });
 
+test('callback errors distinguish expired confirmation links from expired password reset links', () => {
+  const confirmation = getAuthRedirectInfo(
+    'https://nutriai.example.com/?auth=verify#error_code=otp_expired&error_description=opaque-detail',
+  );
+  const recovery = getAuthRedirectInfo(
+    'https://nutriai.example.com/?auth=recovery#error_code=otp_expired&error_description=opaque-detail',
+  );
+
+  assert.match(confirmation.error, /confirmation link is invalid, expired, or already used/);
+  assert.match(recovery.error, /password reset link is invalid, expired, or already used/);
+  assert.doesNotMatch(`${confirmation.error} ${recovery.error}`, /opaque-detail|otp_expired/);
+});
+
 test('standard implicit confirmation callbacks are recognized but a marker alone is not a callback proof', () => {
   const standardCallback = 'https://nutriai.example.com/?auth=verify#access_token=fake-access&refresh_token=fake-refresh&expires_in=3600&token_type=bearer&type=signup';
   assert.deepEqual(getAuthRedirectInfo(standardCallback), { flow: 'verify', error: null });
@@ -267,6 +281,16 @@ test('login failures and unverified accounts cannot become authenticated', async
     EmailVerificationRequiredError,
   );
   assert.equal(signOutScope, 'local');
+});
+
+test('Supabase unconfirmed-email login errors show verification guidance, not invalid credentials', () => {
+  const error = Object.assign(new Error('Email not confirmed'), { code: 'email_not_confirmed' });
+  const verificationMessage = friendlyAuthError(error, 'login');
+  const credentialsMessage = friendlyAuthError(new Error('Invalid login credentials'), 'login');
+
+  assert.match(verificationMessage, /verify your email address/i);
+  assert.doesNotMatch(verificationMessage, /incorrect/i);
+  assert.match(credentialsMessage, /email or password was incorrect/i);
 });
 
 test('session restoration exposes only verified users and unsubscribes cleanly', () => {

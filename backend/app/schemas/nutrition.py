@@ -181,6 +181,14 @@ class NutritionTargets(BaseModel):
 class ProfileUpdateRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
+    name: str | None = Field(default=None, max_length=120)
+    age: int | None = Field(default=None, ge=1, le=120)
+    height_cm: float | None = Field(default=None, ge=30, le=300, allow_inf_nan=False)
+    weight_kg: float | None = Field(default=None, gt=0, le=700, allow_inf_nan=False)
+    activity_level: Literal["Sedentary", "Light", "Moderate", "Active"] | None = None
+    goal: Literal["Gain Muscle", "Maintain Weight", "Lose Weight"] | None = None
+    water_liters: float | None = Field(default=None, ge=0, le=20, allow_inf_nan=False)
+
     dietary_preferences: (
         list[Annotated[str, Field(min_length=1, max_length=80)]] | None
     ) = Field(
@@ -192,12 +200,19 @@ class ProfileUpdateRequest(BaseModel):
     )
     targets: NutritionTargets | None = None
 
+    @field_validator("name", mode="before")
+    @classmethod
+    def normalize_empty_name(cls, value):
+        if isinstance(value, str) and not value.strip():
+            return None
+        return value
+
     @model_validator(mode="after")
     def require_update(self):
         fields = self.model_fields_set
         if not fields:
             raise ValueError(
-                "Provide at least one field: 'dietary_preferences' or 'targets'."
+                "Provide at least one profile field to update."
             )
         if "dietary_preferences" in fields and self.dietary_preferences is None:
             raise ValueError(
@@ -215,6 +230,13 @@ class ProfileUpdateRequest(BaseModel):
 class ProfileResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
+    name: str | None = None
+    age: int | None = None
+    height_cm: float | None = None
+    weight_kg: float | None = None
+    activity_level: Literal["Sedentary", "Light", "Moderate", "Active"] | None = None
+    goal: Literal["Gain Muscle", "Maintain Weight", "Lose Weight"] | None = None
+    water_liters: float | None = None
     dietary_preferences: list[str]
     targets: NutritionTargets | None = None
     updated_at: datetime | None = None

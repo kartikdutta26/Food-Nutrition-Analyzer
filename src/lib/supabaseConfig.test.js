@@ -23,6 +23,30 @@ test('reads and trims the Supabase URL and publishable key', () => {
   });
 });
 
+test('normalizes the REST endpoint URL back to the Supabase project root', () => {
+  const config = getSupabaseConfig({
+    VITE_SUPABASE_URL: ' https://project.supabase.co/rest/v1/ ',
+    VITE_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_test-value',
+  });
+
+  assert.equal(config.url, 'https://project.supabase.co');
+});
+
+test('rejects unrelated nested paths and query parameters in the Supabase project URL', () => {
+  for (const url of [
+    'https://project.supabase.co/auth/v1',
+    'https://project.supabase.co?redirect=/callback',
+  ]) {
+    assert.throws(
+      () => getSupabaseConfig({
+        VITE_SUPABASE_URL: url,
+        VITE_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_test-value',
+      }),
+      /project URL, not a nested service endpoint/,
+    );
+  }
+});
+
 test('reports missing Supabase variable names without echoing other configured values', () => {
   assert.throws(
     () => getSupabaseConfig({

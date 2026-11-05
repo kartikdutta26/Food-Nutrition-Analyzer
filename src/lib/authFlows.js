@@ -105,8 +105,12 @@ export function getAuthRedirectInfo(href) {
   if (!hasRedirectError) return { flow, error: null };
 
   const code = params.get('error_code') || params.get('error') || '';
-  const error = /expired|invalid|otp|already.?used/i.test(code)
-    ? 'This confirmation or recovery link is invalid, expired, or already used. Sign in if you have confirmed your email, or request a fresh link.'
+  const description = params.get('error_description') || '';
+  const isExpiredOrConsumed = /expired|invalid|otp|already.?used/i.test(`${code} ${description}`);
+  const error = isExpiredOrConsumed
+    ? flow === 'recovery'
+      ? 'This password reset link is invalid, expired, or already used. Request a fresh reset email and open its latest link.'
+      : 'This confirmation link is invalid, expired, or already used. Request a fresh email and complete confirmation from the page it opens.'
     : 'Supabase could not complete this email link. Sign in if your email is confirmed, or request a fresh link.';
 
   return { flow, error };
@@ -307,16 +311,26 @@ export function subscribeToVerifiedAuthState(client, {
 }
 
 export function friendlyAuthError(error, action) {
-  if (error?.name === 'EmailVerificationRequiredError') {
+  const errorCode = String(error?.code || '').toLowerCase();
+  const message = String(error?.message || '').toLowerCase();
+
+  if (
+    error?.name === 'EmailVerificationRequiredError'
+    || errorCode === 'email_not_confirmed'
+    || /email not confirmed|email_not_confirmed/.test(message)
+  ) {
     return 'Please verify your email address using the link we sent before signing in.';
   }
 
-  const message = String(error?.message || '').toLowerCase();
   if (message.includes('vite_app_public_url')) {
     return 'Set VITE_APP_PUBLIC_URL to the exact app origin allowlisted in Supabase. Localhost only works on this machine; use a reachable LAN or deployed origin for another device.';
   }
-  if (/expired|invalid|otp_not_found|otp_expired|already.?used/.test(message)) {
-    return 'This confirmation link is invalid, expired, or already used. Sign in if your email is confirmed, or request a fresh confirmation email.';
+  const expiredLinkError = /otp[_\s-]+(?:not[_\s-]+found|expired)|(?:token|link)[\s\S]*(?:expired|invalid)|(?:expired|invalid)[\s\S]*(?:token|link)|already[\s_-]*used/i
+    .test(`${errorCode} ${message}`);
+  if (expiredLinkError) {
+    return action === 'reset'
+      ? 'This password reset link is invalid, expired, or already used. Request a fresh reset email.'
+      : 'This confirmation link may have expired or been opened automatically. Request a fresh confirmation email and complete confirmation from the page it opens.';
   }
   if (message.includes('rate limit') || message.includes('too many requests')) {
     return 'Too many attempts. Please wait a little and try again.';
