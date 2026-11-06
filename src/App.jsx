@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import Navbar from './components/Navbar';
 import AuthPage from './components/AuthPage';
@@ -7,20 +7,69 @@ import FoodAnalyzer from './components/FoodAnalyzer';
 import NutritionResults from './components/NutritionResults';
 import DailyDashboard from './components/DailyDashboard';
 import ProfileSettings from './components/ProfileSettings';
+import OnboardingScreen from './components/OnboardingScreen';
 import Footer from './components/Footer';
 import { PRESET_MEALS, INITIAL_USER_PROFILE, INITIAL_TODAY_LOG } from './data/mockMeals';
 import { authClient, authConfigured } from './auth/authClient';
 
-function AmbientBackground({ activeTab }) {
-  return (
-    <div className={`ambient-backdrop${activeTab === 'home' ? ' ambient-backdrop--food' : ''}`} aria-hidden="true">
-      <div className="ambient-orb ambient-orb--aqua" />
-      <div className="ambient-orb ambient-orb--peach" />
-      <div className="ambient-wave ambient-wave--one" />
-      <div className="ambient-wave ambient-wave--two" />
-      <div className="ambient-specks" />
-    </div>
-  );
+function HomeBackground({ reducedMotion }) {
+  const backgroundRef = useRef(null);
+
+  useEffect(() => {
+    const background = backgroundRef.current;
+    if (!background || reducedMotion) return undefined;
+
+    const getTargetOffset = () => {
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = maxScroll > 0 ? window.scrollY / maxScroll : 0;
+      return Math.max(0, Math.min(progress, 1)) * 150;
+    };
+
+    let targetOffset = getTargetOffset();
+    let displayedOffset = targetOffset;
+    let animationFrame = 0;
+    const render = () => {
+      displayedOffset += (targetOffset - displayedOffset) * 0.12;
+      background.style.transform = `translate3d(0, ${-displayedOffset}px, 0)`;
+
+      if (Math.abs(targetOffset - displayedOffset) > 0.1) {
+        animationFrame = window.requestAnimationFrame(render);
+      } else {
+        animationFrame = 0;
+      }
+    };
+    const updateTarget = () => {
+      targetOffset = getTargetOffset();
+      if (!animationFrame) animationFrame = window.requestAnimationFrame(render);
+    };
+
+    background.style.transform = `translate3d(0, ${-displayedOffset}px, 0)`;
+    window.addEventListener('scroll', updateTarget, { passive: true });
+    window.addEventListener('resize', updateTarget);
+
+    return () => {
+      window.removeEventListener('scroll', updateTarget);
+      window.removeEventListener('resize', updateTarget);
+      if (animationFrame) window.cancelAnimationFrame(animationFrame);
+    };
+  }, [reducedMotion]);
+
+  return <div ref={backgroundRef} className="home-background" aria-hidden="true" />;
+}
+
+function getPreferredTheme() {
+  try {
+    const savedTheme = window.localStorage.getItem('nutriai-theme');
+    if (savedTheme === 'light' || savedTheme === 'dark') return savedTheme;
+  } catch (error) {
+    console.warn('Unable to read the saved theme preference:', error);
+  }
+
+  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    return 'dark';
+  }
+
+  return 'light';
 }
 
 export default function App() {
@@ -28,12 +77,68 @@ export default function App() {
   const [demoMode, setDemoMode] = useState(false);
   const [authLoading, setAuthLoading] = useState(Boolean(authClient?.auth));
   const [pathname, setPathname] = useState(window.location.pathname);
+  const [theme, setTheme] = useState(getPreferredTheme);
+  const [profileState, setProfileState] = useState({ userId: null, loading: false, onboardingCompleted: true, foodPreferences: [] });
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#080a0a' : '#ffffff');
+  }, [theme]);
+
+  const handleToggleTheme = () => {
+    setTheme((currentTheme) => {
+      const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      try {
+        window.localStorage.setItem('nutriai-theme', nextTheme);
+      } catch (error) {
+        console.warn('Unable to save the theme preference:', error);
+      }
+      return nextTheme;
+    });
+  };
 
   useEffect(() => {
     const handlePopState = () => setPathname(window.location.pathname);
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
+
+  useEffect(() => {
+    const userId = authSession?.user?.id;
+    if (!userId || !authClient) {
+      setProfileState({ userId: null, loading: false, onboardingCompleted: true, foodPreferences: [] });
+      return undefined;
+    }
+
+    let active = true;
+    setProfileState({ userId, loading: true, onboardingCompleted: true, foodPreferences: [] });
+    authClient.from('profiles')
+      .select('food_preferences, onboarding_completed')
+      .eq('id', userId)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (!active) return;
+        if (error) {
+          console.error('Unable to load food preferences:', error.message);
+          setProfileState({ userId, loading: false, onboardingCompleted: true, foodPreferences: [] });
+          return;
+        }
+        setProfileState({
+          userId,
+          loading: false,
+          onboardingCompleted: data?.onboarding_completed !== false,
+          foodPreferences: Array.isArray(data?.food_preferences) ? data.food_preferences : [],
+        });
+      })
+      .catch((error) => {
+        if (!active) return;
+        console.error('Unable to load food preferences:', error);
+        setProfileState({ userId, loading: false, onboardingCompleted: true, foodPreferences: [] });
+      });
+
+    return () => { active = false; };
+  }, [authSession?.user?.id]);
 
   useEffect(() => {
     if (!authClient?.auth) {
@@ -68,6 +173,7 @@ export default function App() {
   }, []);
 
   const hasAppAccess = Boolean(authSession?.user) || (import.meta.env.DEV && demoMode);
+  const profileReady = !authSession?.user || (profileState.userId === authSession.user.id && !profileState.loading);
 
   useEffect(() => {
     if (authLoading) return;
@@ -228,7 +334,30 @@ export default function App() {
     if (mode === 'signup' && !result.data.session) {
       return { type: 'success', message: 'Your account was created. Check your email to confirm it, then log in.' };
     }
+    window.history.pushState({}, '', '/');
+    setPathname('/');
     return {};
+  };
+
+  const handleCompleteOnboarding = async (preferences) => {
+    const userId = authSession?.user?.id;
+    if (!userId || !authClient) return { type: 'error', message: 'Sign in again to save your food preferences.' };
+
+    const foodPreferences = [...new Set(preferences)];
+    const { data, error } = await authClient.from('profiles')
+      .update({ food_preferences: foodPreferences, onboarding_completed: true })
+      .eq('id', userId)
+      .select('id')
+      .maybeSingle();
+
+    if (error || !data) {
+      return { type: 'error', message: error?.message || 'Your preferences could not be saved. Please try again.' };
+    }
+
+    setProfileState({ userId, loading: false, onboardingCompleted: true, foodPreferences });
+    window.history.replaceState({}, '', '/');
+    setPathname('/');
+    return { type: 'success' };
   };
 
   const handlePasswordReset = async (email) => {
@@ -245,23 +374,29 @@ export default function App() {
   };
 
   const handleSignOut = async () => {
+    if (authClient?.auth) {
+      const { error } = await authClient.auth.signOut();
+      if (error) {
+        showToast(`Could not sign out: ${error.message}`);
+        return;
+      }
+    }
     setDemoMode(false);
-    if (!authClient?.auth) return;
-    const { error } = await authClient.auth.signOut();
-    if (error) showToast(`Could not sign out: ${error.message}`);
+    window.history.replaceState({}, '', '/login');
+    setPathname('/login');
   };
 
   const handleExploreDemo = () => {
-    window.history.replaceState({}, '', '/');
+    window.history.pushState({}, '', '/');
     setPathname('/');
     setDemoMode(true);
   };
 
-  if (authLoading) {
+  if (authLoading || (authSession?.user && !profileReady)) {
     return (
       <main className="auth-loading" role="status">
         <span className="auth-spinner" aria-hidden="true" />
-        Restoring your secure session…
+        {authLoading ? 'Restoring your secure session…' : 'Preparing your nutrition space…'}
       </main>
     );
   }
@@ -273,13 +408,26 @@ export default function App() {
         onResetPassword={handlePasswordReset}
         onExploreDemo={import.meta.env.DEV ? handleExploreDemo : undefined}
         authConfigured={authConfigured}
+        theme={theme}
+        onToggleTheme={handleToggleTheme}
+      />
+    );
+  }
+
+  if (authSession?.user && !profileState.onboardingCompleted) {
+    return (
+      <OnboardingScreen
+        initialPreferences={profileState.foodPreferences}
+        onComplete={handleCompleteOnboarding}
+        theme={theme}
+        onToggleTheme={handleToggleTheme}
       />
     );
   }
 
   return (
     <div className={`app-shell min-h-screen flex flex-col text-slate-800 font-sans selection:bg-teal-100 selection:text-teal-900${activeTab === 'home' ? ' app-shell--home' : ''}`}>
-      <AmbientBackground activeTab={activeTab} />
+      {activeTab === 'home' && <HomeBackground reducedMotion={reducedMotion} />}
       <div className="app-content flex min-h-screen flex-col">
       
       {/* Toast Notification */}
@@ -302,6 +450,8 @@ export default function App() {
         setActiveTab={setActiveTab} 
         onSignOut={handleSignOut}
         demoMode={demoMode}
+        theme={theme}
+        onToggleTheme={handleToggleTheme}
       />
 
       {/* Dynamic Content Views */}

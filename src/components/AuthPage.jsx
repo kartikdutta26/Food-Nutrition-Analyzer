@@ -2,17 +2,15 @@ import { useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import {
   ArrowRight,
-  BrainCircuit,
-  ChartNoAxesCombined,
   Eye,
   EyeOff,
-  Goal,
-  Leaf,
   LockKeyhole,
   Mail,
+  MoonStar,
   Salad,
   ShieldCheck,
   Sparkles,
+  SunMedium,
   UserRound,
 } from 'lucide-react';
 import './auth.css';
@@ -20,7 +18,7 @@ import './auth.css';
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const passwordRequirement = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
-export default function AuthPage({ onAuthenticate, onResetPassword, onExploreDemo, authConfigured }) {
+export default function AuthPage({ onAuthenticate, onResetPassword, onExploreDemo, authConfigured, theme, onToggleTheme }) {
   const [mode, setMode] = useState('login');
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -31,16 +29,6 @@ export default function AuthPage({ onAuthenticate, onResetPassword, onExploreDem
   const [feedback, setFeedback] = useState(null);
   const reducedMotion = useReducedMotion();
   const isSignup = mode === 'signup';
-  const storyDescription = 'Snap your meals, get personalized nutrition insights, and build healthier habits with the power of AI.';
-  const storyWordVariants = {
-    hidden: { opacity: 0, y: 7, filter: 'blur(4px)' },
-    visible: {
-      opacity: 1,
-      y: 0,
-      filter: 'blur(0px)',
-      transition: { duration: 0.24, ease: [0.22, 1, 0.36, 1] },
-    },
-  };
 
   const changeMode = (nextMode) => {
     setMode(nextMode);
@@ -107,13 +95,25 @@ export default function AuthPage({ onAuthenticate, onResetPassword, onExploreDem
 
   return (
     <main className="auth-screen">
-      <div className="auth-atmosphere" aria-hidden="true">
-        <div className="auth-glow auth-glow--mint" />
-        <div className="auth-glow auth-glow--peach" />
-        <div className="auth-glow auth-glow--lilac" />
-        <div className="auth-grain" />
+      <div className="auth-background-effects" aria-hidden="true">
+        <span className="auth-wave auth-wave--one" />
+        <span className="auth-wave auth-wave--two" />
+        <span className="auth-shape auth-shape--diamond" />
+        <span className="auth-shape auth-shape--spark" />
+        <span className="auth-shape auth-shape--ring" />
+        <span className="auth-shape auth-shape--orb" />
+        <span className="auth-shape auth-shape--spark auth-shape--spark-small" />
+        <span className="auth-particle auth-particle--one" />
+        <span className="auth-particle auth-particle--two" />
+        <span className="auth-particle auth-particle--three" />
+        <span className="auth-particle auth-particle--four" />
+        <span className="auth-particle auth-particle--five" />
+        <span className="auth-particle auth-particle--six" />
+        <span className="auth-particle auth-particle--seven" />
+        <span className="auth-particle auth-particle--eight" />
+        <span className="auth-particle auth-particle--nine" />
+        <span className="auth-particle auth-particle--ten" />
       </div>
-
       <motion.section
         className="auth-card"
         initial={reducedMotion ? false : { opacity: 0, y: 22, scale: 0.985 }}
@@ -121,104 +121,22 @@ export default function AuthPage({ onAuthenticate, onResetPassword, onExploreDem
         transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
         aria-label="NutriAI account access"
       >
-        <section className="auth-story" aria-labelledby="auth-brand-heading">
-          <motion.div
-            className="auth-brand"
-            initial={reducedMotion ? false : { opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, delay: 0.12 }}
-          >
-            <span className="auth-brand-mark"><Salad size={23} strokeWidth={1.8} /></span>
-            <span className="auth-brand-word">Nutri<span>AI</span><small>INTELLIGENT NUTRITION</small></span>
-          </motion.div>
-
-          <div className="auth-story-copy">
-            <motion.span
-              className="auth-eyebrow"
+        <section className="auth-form-panel" aria-label={isSignup ? 'Create your account' : 'Sign in to your account'}>
+          <div className="auth-panel-header">
+            <button type="button" className="auth-theme-toggle" onClick={onToggleTheme} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>
+              {theme === 'dark' ? <SunMedium size={15} /> : <MoonStar size={15} />}
+              <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>
+            </button>
+            <motion.div
+              className="auth-brand"
               initial={reducedMotion ? false : { opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.22 }}
+              transition={{ duration: 0.35, delay: 0.08 }}
             >
-              <Sparkles size={14} /> A little more in tune
-            </motion.span>
-            <h1 className="auth-hero-brand" id="auth-brand-heading">
-              <span>Nutri</span><span>AI</span>
-            </h1>
-            <motion.h2
-              className="auth-story-headline"
-              id="auth-headline"
-              initial={reducedMotion ? false : { opacity: 0, y: 17, filter: 'blur(9px)' }}
-              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-              transition={{ duration: 0.72, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
-            >
-              Your food.<br />Your goals.<br /><span>A healthier you.</span>
-            </motion.h2>
-            <motion.p
-              aria-label={storyDescription}
-              initial={reducedMotion ? false : 'hidden'}
-              animate="visible"
-              variants={{
-                hidden: {},
-                visible: {
-                  transition: { delayChildren: 0.48, staggerChildren: 0.026 },
-                },
-              }}
-            >
-              {storyDescription.split(' ').map((word, index, words) => (
-                <motion.span
-                  key={`${word}-${index}`}
-                  variants={storyWordVariants}
-                >
-                  {word}{index < words.length - 1 ? ' ' : ''}
-                </motion.span>
-              ))}
-            </motion.p>
-            <motion.div
-              className="auth-benefits"
-              aria-label="NutriAI benefits"
-              initial={reducedMotion ? false : 'hidden'}
-              animate="visible"
-              variants={{
-                hidden: {},
-                visible: {
-                  transition: { delayChildren: 1.14, staggerChildren: 0.1 },
-                },
-              }}
-            >
-              <motion.span variants={storyWordVariants}><i><BrainCircuit size={16} /></i><span>AI-powered food insights</span></motion.span>
-              <motion.span variants={storyWordVariants}><i><Goal size={16} /></i><span>Personalized nutrition goals</span></motion.span>
-              <motion.span variants={storyWordVariants}><i><ChartNoAxesCombined size={16} /></i><span>Smart meal tracking</span></motion.span>
+              <span className="auth-brand-mark"><Salad size={21} strokeWidth={1.8} /></span>
+              <span className="auth-brand-word">Nutri<span>AI</span><small>INTELLIGENT NUTRITION</small></span>
             </motion.div>
           </div>
-
-          <div className="auth-food-art">
-            <img className="auth-food-bowl" src="/nutriai-3d-meal-bowl.png" alt="" />
-            <span className="auth-food-orbit auth-food-orbit--one" aria-hidden="true" />
-            <span className="auth-food-orbit auth-food-orbit--two" aria-hidden="true" />
-            <span className="auth-food-sparkle auth-food-sparkle--one" aria-hidden="true"><Sparkles size={18} /></span>
-            <span className="auth-food-sparkle auth-food-sparkle--two" aria-hidden="true"><Sparkles size={13} /></span>
-            <motion.div
-              className="auth-food-caption"
-              initial={reducedMotion ? false : { opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 1.68, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <span className="auth-food-caption-icon"><Leaf size={15} /></span>
-              <span><strong>Real food. Smarter choices.</strong><small>Your nutrition, made personal</small></span>
-              <span className="auth-food-spark"><Sparkles size={17} /></span>
-            </motion.div>
-          </div>
-          <motion.span
-            className="auth-story-note"
-            initial={reducedMotion ? false : { opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.4, delay: 1.8 }}
-          >
-            <ShieldCheck size={14} /> Your wellness journey, your way
-          </motion.span>
-        </section>
-
-        <section className="auth-form-panel" aria-label={isSignup ? 'Create your account' : 'Sign in to your account'}>
           <motion.div
             className="auth-form-heading"
             initial={reducedMotion ? false : { opacity: 0, y: 10 }}

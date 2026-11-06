@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { ArrowUpRight, BarChart3, CalendarDays, Camera, LogOut, Menu, Salad, Sparkles, UserRound, X } from 'lucide-react';
+import { ArrowUpRight, BarChart3, CalendarDays, Camera, LogOut, Menu, MoonStar, Salad, Sparkles, SunMedium, UserRound, X } from 'lucide-react';
 
 const navItems = [
   { id: 'home', label: 'Home', icon: Salad },
@@ -9,9 +9,10 @@ const navItems = [
   { id: 'results', label: 'Smart analysis', icon: BarChart3 },
 ];
 
-export default function Navbar({ activeTab, setActiveTab, onSignOut, demoMode }) {
+export default function Navbar({ activeTab, setActiveTab, onSignOut, demoMode, theme, onToggleTheme }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const reducedMotion = useReducedMotion();
+  const isDark = theme === 'dark';
 
   const navigate = (tab) => {
     setActiveTab(tab);
@@ -49,6 +50,10 @@ export default function Navbar({ activeTab, setActiveTab, onSignOut, demoMode })
 
           <div className="nav-actions">
             {demoMode && <span className="demo-mode-badge">Demo mode</span>}
+            <button type="button" className="theme-toggle-nav" onClick={onToggleTheme} aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`} title={`Switch to ${isDark ? 'light' : 'dark'} mode`}>
+              {isDark ? <SunMedium size={15} /> : <MoonStar size={15} />}
+              <span>{isDark ? 'Light' : 'Dark'}</span>
+            </button>
             <button className={`profile-shortcut${activeTab === 'profile' ? ' is-active' : ''}`} onClick={() => navigate('profile')} aria-label="Profile and goals" aria-current={activeTab === 'profile' ? 'page' : undefined}>
               <UserRound size={16} />
               <span>Profile</span>
@@ -89,6 +94,10 @@ export default function Navbar({ activeTab, setActiveTab, onSignOut, demoMode })
             >
               {renderItems(true)}
               {demoMode && <span className="demo-mode-badge demo-mode-badge--mobile">Demo mode · sample data only</span>}
+              <button type="button" className="nav-link nav-link--mobile" onClick={onToggleTheme}>
+                {isDark ? <SunMedium size={16} /> : <MoonStar size={16} />}
+                <span>Switch to {isDark ? 'light' : 'dark'} mode</span>
+              </button>
               <button className={`nav-link nav-link--mobile${activeTab === 'profile' ? ' is-active' : ''}`} onClick={() => navigate('profile')} aria-current={activeTab === 'profile' ? 'page' : undefined}>
                 <UserRound size={16} /><span>Profile &amp; goals</span>
               </button>

@@ -45,7 +45,7 @@ export const popButtonVariants = {
   hover: {
     scale: 1.025,
     y: -1.5,
-    boxShadow: '0 12px 22px -8px rgba(109, 53, 200, 0.3), 0 6px 12px -5px rgba(109, 53, 200, 0.18)',
+    boxShadow: '0 12px 22px -8px rgba(53, 200, 190, 0.3), 0 6px 12px -5px rgba(53, 200, 190, 0.18)',
     transition: {
       type: 'spring',
       stiffness: 420,
@@ -55,7 +55,7 @@ export const popButtonVariants = {
   tap: {
     scale: 0.975,
     y: 0,
-    boxShadow: '0 3px 8px -2px rgba(109, 53, 200, 0.2)',
+    boxShadow: '0 3px 8px -2px rgba(53, 200, 190, 0.2)',
     transition: {
       type: 'spring',
       stiffness: 520,

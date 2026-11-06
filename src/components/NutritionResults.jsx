@@ -33,7 +33,7 @@ function CircularProgress({ value, max, label, unit, color, icon: Icon }) {
             cx="48"
             cy="48"
             r={radius}
-            stroke="#f0fdfa"
+            stroke="var(--chart-track)"
             strokeWidth="8"
             fill="transparent"
           />
@@ -252,7 +252,7 @@ export default function NutritionResults({
             max={2000}
             label="Calories"
             unit="kcal"
-            color="#0d9488"
+            color="var(--metric-calories)"
             icon={Flame}
           />
           <CircularProgress
@@ -260,7 +260,7 @@ export default function NutritionResults({
             max={100}
             label="Protein"
             unit="g"
-            color="#14b8a6"
+            color="var(--metric-protein)"
             icon={Dumbbell}
           />
           <CircularProgress
@@ -268,7 +268,7 @@ export default function NutritionResults({
             max={220}
             label="Carbohydrates"
             unit="g"
-            color="#f59e0b"
+            color="var(--metric-carbs)"
             icon={Wheat}
           />
           <CircularProgress
@@ -276,7 +276,7 @@ export default function NutritionResults({
             max={65}
             label="Healthy Fats"
             unit="g"
-            color="#f97316"
+            color="var(--metric-fats)"
             icon={Droplet}
           />
           <CircularProgress
@@ -284,7 +284,7 @@ export default function NutritionResults({
             max={30}
             label="Dietary Fiber"
             unit="g"
-            color="#10b981"
+            color="var(--metric-fiber)"
             icon={Leaf}
           />
         </div>
