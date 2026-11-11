@@ -1,0 +1,3 @@
+# Optional M5.2 decoder only; install inside agentic_ai/.venv.
+# CPython 3.14 / Windows AMD64 wheel verified before installation.
+Pillow==13.0.0
