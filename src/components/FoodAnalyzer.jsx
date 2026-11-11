@@ -208,8 +208,8 @@ export default function FoodAnalyzer({ onAnalysisComplete }) {
                           alt={meal.name}
                           className="w-full h-16 rounded-lg object-cover"
                         />
-                        <div className="truncate">
-                          <p className="font-bold text-slate-800 text-xs truncate">{meal.name}</p>
+                        <div className="min-w-0">
+                          <p className="food-analyzer-meal-name font-bold text-slate-800 text-xs">{meal.name}</p>
                           <p className="text-[10px] text-teal-700 font-semibold">{meal.calories} kcal</p>
                         </div>
                         {isSelected && (

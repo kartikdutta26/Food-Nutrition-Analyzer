@@ -288,11 +288,11 @@ export default function DailyDashboard({
               key={meal.id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="p-4 rounded-2xl border border-teal-50 bg-teal-50/20 hover:bg-teal-50/50 transition-colors flex items-center justify-between gap-4"
+              className="p-4 rounded-2xl border border-teal-50 bg-teal-50/20 hover:bg-teal-50/50 transition-colors flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-center sm:gap-4"
             >
-              <div className="flex items-center gap-4">
+              <div className="flex min-w-0 items-center gap-4">
                 <span className="text-2xl">{meal.icon || '🍽️'}</span>
-                <div>
+                <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-black text-teal-800 uppercase tracking-wide">
                       {meal.slot}
@@ -308,7 +308,7 @@ export default function DailyDashboard({
                 </div>
               </div>
 
-              <div className="flex items-center gap-4">
+              <div className="flex shrink-0 items-center gap-4 self-end sm:self-auto">
                 <div className="text-right">
                   <span className="text-base font-black text-slate-900">{meal.calories}</span>
                   <span className="text-xs text-slate-500 font-medium ml-1">kcal</span>
@@ -327,7 +327,7 @@ export default function DailyDashboard({
 
           {/* Dinner Placeholder / Add Meal button if dinner not logged */}
           {!todayLog.meals.some(m => m.slot === 'Dinner') && (
-            <div className="p-4 rounded-2xl border-2 border-dashed border-teal-200 bg-teal-50/20 flex items-center justify-between">
+            <div className="p-4 rounded-2xl border-2 border-dashed border-teal-200 bg-teal-50/20 flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-center">
               <div className="flex items-center gap-3">
                 <span className="text-2xl">🌙</span>
                 <div>
@@ -344,7 +344,7 @@ export default function DailyDashboard({
                 whileHover="hover"
                 whileTap="tap"
                 onClick={() => setShowAddModal(true)}
-                className="px-4 py-2 rounded-xl bg-teal-600 text-white text-xs font-bold shadow-sm"
+                className="self-end px-4 py-2 rounded-xl bg-teal-600 text-white text-xs font-bold shadow-sm sm:self-auto"
               >
                 + Add Dinner
               </motion.button>

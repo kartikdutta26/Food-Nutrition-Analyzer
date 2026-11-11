@@ -134,16 +134,16 @@ export default function NutritionResults({
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10">
       
       {/* Top Breadcrumb & Action */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col items-start gap-3 mb-8 sm:flex-row sm:items-center sm:justify-between sm:gap-0">
         <button
           onClick={onScanAnother}
-          className="flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-teal-700 transition-colors cursor-pointer"
+          className="flex items-center gap-2 whitespace-nowrap text-sm font-bold text-slate-600 hover:text-teal-700 transition-colors cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Analyze Another Meal</span>
         </button>
 
-        <div className="flex items-center gap-2 text-xs font-semibold text-teal-800 bg-teal-50 px-3 py-1.5 rounded-full border border-teal-200">
+        <div className="flex max-w-full flex-wrap items-center gap-2 text-xs font-semibold text-teal-800 bg-teal-50 px-3 py-1.5 rounded-full border border-teal-200">
           <Sparkles className="w-3.5 h-3.5 text-teal-600" />
           <span>Analysis Complete • Verified by NutriAI Model</span>
         </div>

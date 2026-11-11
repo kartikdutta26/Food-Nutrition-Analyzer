@@ -722,6 +722,17 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .footer-bottom { flex-direction: column; gap: 7px; }
 }
 
+@media (max-width: 640px) {
+  .site-header .brand-lockup { min-height: 44px; }
+  .site-header .mobile-menu-toggle { width: 44px; height: 44px; }
+  .footer-brand .brand-lockup { min-height: 44px; }
+  .footer-cta-box button { min-height: 40px; }
+  .text-link { min-height: 40px; padding-block: 10px; }
+  .footer-links button { min-height: 40px; padding-block: 8px; }
+  .auth-forgot-row button { min-width: 40px; }
+  .app-main button { min-width: 40px; min-height: 40px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }

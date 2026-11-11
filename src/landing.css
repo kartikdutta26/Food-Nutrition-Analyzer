@@ -524,8 +524,17 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 @media (max-width: 640px) {
   .food-analyzer { padding: 24px 14px; border-radius: 24px; }
   .food-analyzer-mode-switch { width: 100%; }
-  .food-analyzer-mode-button { flex: 1 1 145px; justify-content: center; padding-inline: 10px; }
+  .food-analyzer-mode-button { flex: 1 1 145px; justify-content: center; min-height: 44px; padding-inline: 10px; }
   .food-analyzer-meal-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .food-analyzer-meal-name {
+    display: -webkit-box;
+    min-height: 2.4em;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-height: 1.2;
+  }
   .food-analyzer .food-analyzer-panel { padding: 18px; border-radius: 23px; }
 }
 
